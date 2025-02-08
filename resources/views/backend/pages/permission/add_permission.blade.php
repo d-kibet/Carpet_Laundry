@@ -52,6 +52,7 @@
         <option value="laundry"> Laundry</option>
         <option value="mpesa"> Mpesa</option>
         <option value="roles"> Roles</option>
+        <option value="user"> User</option>
 
                 </select>
 

@@ -86,26 +86,36 @@
                     </a>
                     <div class="collapse" id="permission">
                         <ul class="nav-second-level">
+                            @if(Auth::user()->can('permission.all'))
                             <li>
                                 <a href="{{ route('all.permission') }}">All Permission </a>
                             </li>
+                            @endif
+
+                            @if(Auth::user()->can('roles.all'))
                             <li>
                                 <a href="{{ route('all.roles') }}">All Roles </a>
                             </li>
+                            @endif
+
+                            @if(Auth::user()->can('role.permission'))
                             <li>
                                 <a href="{{ route('add.roles.permission') }}">Roles in Permission </a>
                             </li>
+                            @endif
+
+                            @if(Auth::user()->can('all.roles.permission'))
                             <li>
                                 <a href="{{ route('all.roles.permission') }}">All Roles in Permission </a>
                             </li>
-
+                            @endif
 
                         </ul>
                     </div>
                 </li>
                 @endif
 
-                @if(Auth::user()->can('admin.user'))
+                @if(Auth::user()->can('admin.user.menu'))
                 <li>
                     <a href="#admin" data-bs-toggle="collapse">
                         <i class="mdi mdi-email-multiple-outline"></i>
@@ -114,13 +124,18 @@
                     </a>
                     <div class="collapse" id="admin">
                         <ul class="nav-second-level">
+
+                            @if(Auth::user()->can('admin.all'))
                             <li>
                                 <a href="{{ route('all.admin') }}">All Admin </a>
                             </li>
+                            @endif
+
+                            @if(Auth::user()->can('admin.add'))
                             <li>
                                 <a href="{{ route('add.admin') }}">Add Admin </a>
                             </li>
-
+                            @endif
 
                         </ul>
                     </div>

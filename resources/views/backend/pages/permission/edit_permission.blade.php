@@ -55,6 +55,7 @@
         <option value="laundry"{{ $permission->group_name == 'laundry' ? 'selected' : '' }}> Laundry</option>
         <option value="mpesa"{{ $permission->group_name == 'mpesa' ? 'selected' : '' }}> Mpesa</option>
         <option value="roles"{{ $permission->group_name == 'roles' ? 'selected' : '' }}> Roles</option>
+        <option value="user"{{ $permission->group_name == 'user' ? 'selected' : '' }}> User</option>
 
                 </select>
 
