@@ -5,10 +5,10 @@
             <div class="navbar-brand-box">
                 <a href="{{ route('dashboard') }}" class="logo logo-dark">
                     <span class="logo-sm">
-                        <img src="{{ asset('backend/assets/images/Raha_logo.jpg') }}" alt="raha_logo" height="44">
+                        <img src="{{ asset('backend/assets/images/Raha_logo.jpg') }}" alt="raha_logo" height="80">
                     </span>
                     <span class="logo-lg">
-                        <img src="{{ asset('backend/assets/images/Raha_logo.jpg') }}" alt="raha_logo" height="40">
+                        <img src="{{ asset('backend/assets/images/Raha_logo.jpg') }}" alt="raha_logo" height="140">
                     </span>
                 </a>
 
@@ -17,7 +17,7 @@
                         <img src="{{ asset('backend/assets/images/Raha_logo.jpg') }}" alt="raha_logo" height="22">
                     </span>
                     <span class="logo-lg">
-                        <img src="{{ asset('backend/assets/images/Raha_logo.jpg') }}" alt="raha_logo" height="20">
+                        <img src="{{ asset('backend/assets/images/Raha_logo.jpg') }}" alt="raha_logo" height="40">
                     </span>
                 </a>
             </div>

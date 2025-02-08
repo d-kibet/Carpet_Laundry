@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Backend\CarpetController;
 use App\Http\Controllers\Backend\LaundryController;
 use App\Http\Controllers\Backend\MpesaController;
+use App\Http\Controllers\Backend\RoleController;
 use App\Http\Controllers\Home\ContactController;
 use App\Http\Controllers\Home\AboutController;
 use App\Http\Controllers\Home\ServiceController;
@@ -48,25 +49,25 @@ Route::controller(AdminController::class)->group(function () {
 /// Carpet All Route
 Route::controller(CarpetController::class)->group(function(){
 
-    Route::get('/all/carpet','AllCarpet')->name('all.carpet');
-    Route::get('/add/carpet','AddCarpet')->name('add.carpet');
+    Route::get('/all/carpet','AllCarpet')->name('all.carpet')->middleware('permission:carpet.all');
+    Route::get('/add/carpet','AddCarpet')->name('add.carpet')->middleware('permission:carpet.add');
     Route::post('/store/carpet','StoreCarpet')->name('carpet.store');
     Route::get('/history/carpet/{phone}','HistoryCarpet')->name('history.client');
     Route::get('/edit/carpet/{id}','EditCarpet')->name('edit.carpet');
     Route::post('/update/carpet','UpdateCarpet')->name('carpet.update');
-    Route::post('/delete/carpet','DeleteCarpet')->name('delete.carpet');
+    Route::get('/delete/carpet/{id}','DeleteCarpet')->name('delete.carpet');
 
     });
 
     /// Laundry All Route
 Route::controller(LaundryController::class)->group(function(){
 
-    Route::get('/all/laundry','AllLaundry')->name('all.laundry');
-    Route::get('/add/laundry','AddLaundry')->name('add.laundry');
+    Route::get('/all/laundry','AllLaundry')->name('all.laundry')->middleware('permission:laundry.all');;
+    Route::get('/add/laundry','AddLaundry')->name('add.laundry')->middleware('permission:laundry.add');;
     Route::post('/store/laundry','StoreLaundry')->name('laundry.store');
     Route::get('/edit/laundry/{id}','EditLaundry')->name('edit.laundry');
     Route::post('/update/laundry','UpdateLaundry')->name('laundry.update');
-    Route::post('/delete/laundry','DeleteLaundry')->name('delete.laundry');
+    Route::get('/delete/laundry/{id}','DeleteLaundry')->name('delete.laundry');
     Route::get('/details/laundry/{id}','DetailsLaundry')->name('details.laundry');
 
     });
@@ -74,12 +75,12 @@ Route::controller(LaundryController::class)->group(function(){
      /// Mpesa All Route
 Route::controller(MpesaController::class)->group(function(){
 
-    Route::get('/all/mpesa','AllMpesa')->name('all.mpesa');
-    Route::get('/add/mpesa','AddMpesa')->name('add.mpesa');
+    Route::get('/all/mpesa','AllMpesa')->name('all.mpesa')->middleware('permission:mpesa.all');;
+    Route::get('/add/mpesa','AddMpesa')->name('add.mpesa')->middleware('permission:mpesa.add');;
     Route::post('/store/mpesa','StoreMpesa')->name('mpesa.store');
     Route::get('/edit/mpesa/{id}','EditMpesa')->name('edit.mpesa');
     Route::post('/update/mpesa','UpdateMpesa')->name('mpesa.update');
-    Route::post('/delete/mpesa','DeleteMpesa')->name('delete.mpesa');
+    Route::get('/delete/mpesa/{id}','DeleteMpesa')->name('delete.mpesa');
 
     });
 
@@ -113,7 +114,51 @@ Route::controller(AboutController::class)->group(function () {
 
 });
 
+///Permission All Route
+Route::controller(RoleController::class)->group(function(){
 
+    Route::get('/all/permission','AllPermission')->name('all.permission');
+    Route::get('/add/permission','AddPermission')->name('add.permission');
+    Route::post('/store/permission','StorePermission')->name('permission.store');
+    Route::get('/edit/permission/{id}','EditPermission')->name('edit.permission');
+    Route::post('/update/permission','UpdatePermission')->name('permission.update');
+    Route::get('/delete/permission/{id}','DeletePermission')->name('delete.permission');
+});
+
+///Roles All Route
+Route::controller(RoleController::class)->group(function(){
+
+    Route::get('/all/roles','AllRoles')->name('all.roles');
+    Route::get('/add/roles','AddRoles')->name('add.roles');
+    Route::post('/store/roles','StoreRoles')->name('roles.store');
+    Route::get('/edit/roles/{id}','EditRoles')->name('edit.roles');
+    Route::post('/update/roles','UpdateRoles')->name('roles.update');
+    Route::get('/delete/roles/{id}','DeleteRoles')->name('delete.roles');
+});
+
+///Add Roles in Permission All Route
+Route::controller(RoleController::class)->group(function(){
+
+    Route::get('/add/roles/permission','AddRolesPermission')->name('add.roles.permission');
+    Route::post('/role/permission/store','StoreRolesPermission')->name('role.permission.store');
+    Route::get('/all/roles/permission','AllRolesPermission')->name('all.roles.permission');
+    Route::get('/admin/edit/roles/{id}','AdminEditRoles')->name('admin.edit.roles');
+    Route::post('/role/permission/update/{id}','RolePermissionUpdate')->name('role.permission.update');
+    Route::get('/admin/delete/roles/{id}','AdminDeleteRoles')->name('admin.delete.roles');
+
+});
+
+///Admin User All Route
+Route::controller(AdminController::class)->group(function(){
+
+    Route::get('/all/admin','AllAdmin')->name('all.admin');
+    Route::get('/add/admin','AddAdmin')->name('add.admin');
+    Route::post('/store/admin','StoreAdmin')->name('admin.store');
+    Route::get('/edit/admin/{id}','EditAdmin')->name('edit.admin');
+    Route::post('/update/admin','UpdateAdmin')->name('admin.update');
+    Route::get('/delete/admin/{id}','DeleteAdmin')->name('delete.admin');
+
+   });
 
 
 require __DIR__.'/auth.php';

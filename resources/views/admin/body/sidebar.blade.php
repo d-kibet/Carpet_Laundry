@@ -18,39 +18,117 @@
                     </a>
                 </li>
 
-
+                @if(Auth::user()->can('carpet.menu'))
                 <li>
-                    <a href="javascript: void(0);" class="has-arrow waves-effect">
+                    <a href="javascript: void(0);" data-bs-toggle="collapse">
                         <i class="mdi mdi-layers-outline"></i>
                         <span>Carpets</span>
                     </a>
                     <ul class="sub-menu" aria-expanded="false">
+
+                        @if(Auth::user()->can('carpet.all'))
                         <li><a href="{{ route('all.carpet') }}">All Carpet Records</a></li>
+                        @endif
+
+                        @if(Auth::user()->can('carpet.add'))
                         <li><a href="{{ route('add.carpet') }}">Add Carpet Records</a></li>
+                        @endif
                     </ul>
                 </li>
+                @endif
 
+                @if(Auth::user()->can('laundry.menu'))
                 <li>
-                    <a href="javascript: void(0);" class="has-arrow waves-effect">
+                    <a href="javascript: void(0);" data-bs-toggle="collapse">
                         <i class="fa-solid fa-shirt"></i>
                         <span>Laundry</span>
                     </a>
                     <ul class="sub-menu" aria-expanded="false">
+
+                        @if(Auth::user()->can('laundry.all'))
                         <li><a href="{{ route('all.laundry') }}">All Laundry Records</a></li>
+                        @endif
+
+                        @if(Auth::user()->can('laundry.add'))
                         <li><a href="{{ route('add.laundry') }}">Add Laundry Record</a></li>
+                        @endif
+
                     </ul>
                 </li>
+                @endif
 
+                @if(Auth::user()->can('mpesa.menu'))
                 <li>
-                    <a href="javascript: void(0);" class="has-arrow waves-effect">
+                    <a href="javascript: void(0);" data-bs-toggle="collapse">
                         <i class="fa-solid fa-sack-dollar"></i>
                         <span>M-pesa</span>
                     </a>
                     <ul class="sub-menu" aria-expanded="false">
+
+                        @if(Auth::user()->can('mpesa.all'))
                         <li><a href="{{ route('all.mpesa') }}">All M-pesa Records</a></li>
-                        <li><a href="{{ route('add.carpet') }}">Add M-pesa Record</a></li>
+                        @endif
+
+                        @if(Auth::user()->can('mpesa.add'))
+                        <li><a href="{{ route('add.mpesa') }}">Add M-pesa Record</a></li>
+                        @endif
+
                     </ul>
                 </li>
+                @endif
+
+                @if(Auth::user()->can('roles.menu'))
+                <li>
+                    <a href="#permission" data-bs-toggle="collapse">
+                        <i class="mdi mdi-email-multiple-outline"></i>
+                        <span> Roles And Permission    </span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <div class="collapse" id="permission">
+                        <ul class="nav-second-level">
+                            <li>
+                                <a href="{{ route('all.permission') }}">All Permission </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('all.roles') }}">All Roles </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('add.roles.permission') }}">Roles in Permission </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('all.roles.permission') }}">All Roles in Permission </a>
+                            </li>
+
+
+                        </ul>
+                    </div>
+                </li>
+                @endif
+
+                @if(Auth::user()->can('admin.user'))
+                <li>
+                    <a href="#admin" data-bs-toggle="collapse">
+                        <i class="mdi mdi-email-multiple-outline"></i>
+                        <span> Setting Admin User    </span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <div class="collapse" id="admin">
+                        <ul class="nav-second-level">
+                            <li>
+                                <a href="{{ route('all.admin') }}">All Admin </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('add.admin') }}">Add Admin </a>
+                            </li>
+
+
+                        </ul>
+                    </div>
+                </li>
+                @endif
+
+                <li class="menu-title">Pages</li>
+
 
 
 

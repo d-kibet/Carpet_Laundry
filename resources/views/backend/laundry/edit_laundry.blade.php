@@ -9,21 +9,22 @@
                     <!-- Start Content-->
                     <div class="container-fluid" style="margin-top: 20px;">
 
-                        <!-- start page title -->
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="page-title-box">
-                                    <div class="page-title-right">
-                                        <ol class="breadcrumb m-0">
-                                            <li class="breadcrumb-item"><a href="javascript: void(0);">Edit Laundry</a></li>
-
-                                        </ol>
-                                    </div>
-                                    <h4 class="page-title">Edit Laundry</h4>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- end page title -->
+                        <!-- Page Title -->
+                         <div class="row mb-3">
+                             <div class="col-12">
+                                 <div class="page-title-box d-flex justify-content-between align-items-center">
+                                     <h4 class="page-title mb-0">Edit Laundry</h4>
+                                     <nav aria-label="breadcrumb">
+                                         <ol class="breadcrumb mb-0">
+                                             <li class="breadcrumb-item active" aria-current="page">
+                                                 <a href="javascript:void(0);">Edit Laundry</a>
+                                             </li>
+                                         </ol>
+                                     </nav>
+                                 </div>
+                             </div>
+                         </div>
+                         <!-- End Page Title -->
 
 <div class="row">
 

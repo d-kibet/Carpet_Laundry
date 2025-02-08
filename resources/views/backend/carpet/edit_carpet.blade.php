@@ -9,21 +9,22 @@
                     <!-- Start Content-->
                     <div class="container-fluid" style="margin-top: 20px;">
 
-                        <!-- start page title -->
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="page-title-box">
-                                    <div class="page-title-right">
-                                        <ol class="breadcrumb m-0">
-                                            <li class="breadcrumb-item"><a href="javascript: void(0);">Edit Carpet</a></li>
-
-                                        </ol>
-                                    </div>
-                                    <h4 class="page-title">Edit Carpet</h4>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- end page title -->
+                        <!-- Page Title -->
+                         <div class="row mb-3">
+                             <div class="col-12">
+                                 <div class="page-title-box d-flex justify-content-between align-items-center">
+                                     <h4 class="page-title mb-0">Edit Carpet</h4>
+                                     <nav aria-label="breadcrumb">
+                                         <ol class="breadcrumb mb-0">
+                                             <li class="breadcrumb-item active" aria-current="page">
+                                                 <a href="javascript:void(0);">Edit Carpet</a>
+                                             </li>
+                                         </ol>
+                                     </nav>
+                                 </div>
+                             </div>
+                         </div>
+                         <!-- End Page Title -->
 
 <div class="row">
 
@@ -60,28 +61,58 @@
     </div>
 
 
-              <div class="col-md-6">
-        <div class="mb-3">
-            <label for="firstname" class="form-label">Carpet Size</label>
-            <input type="text" name="size" class="form-control @error('size') is-invalid @enderror" value="{{ $carpet-> size}}"  >
-             @error('size')
-      <span class="text-danger"> {{ $message }} </span>
-            @enderror
-        </div>
-    </div>
+               <!-- Carpet Size -->
+               <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="size" class="form-label">Carpet Size</label>
+                    <input
+                        type="text"
+                        name="size"
+                        id="size"
+                        class="form-control @error('size') is-invalid @enderror"
+                        step="any"
+                        value="{{ $carpet-> size}}">
+                    @error('size')
+                        <span class="text-danger">{{ $message }}</span>
+                    @enderror
+                </div>
+            </div>
 
+            <!-- Price per Unit Size (Multiplier) -->
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="multiplier" class="form-label">Price per Square Meter</label>
+                    <input
+                        type="number"
+                        name="multiplier"
+                        id="multiplier"
+                        class="form-control @error('multiplier') is-invalid @enderror"
+                        step="any"
+                        value="30"> <!-- Default constant value -->
+                    @error('multiplier')
+                        <span class="text-danger">{{ $message }}</span>
+                    @enderror
+                </div>
+            </div>
 
+            <!-- Carpet Price (Automatically Calculated) -->
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="price" class="form-label">Carpet Price</label>
+                    <input
+                        type="number"
+                        name="price"
+                        id="price"
+                        class="form-control @error('price') is-invalid @enderror"
+                        readonly
+                        step="any"
+                        value="{{ $carpet-> price}}">
+                    @error('price')
+                        <span class="text-danger">{{ $message }}</span>
+                    @enderror
+                </div>
+            </div>
 
-
-              <div class="col-md-6">
-        <div class="mb-3">
-            <label for="firstname" class="form-label">Carpet Price  </label>
-            <input type="text" name="price" class="form-control @error('price') is-invalid @enderror" value="{{ $carpet-> price}}"  >
-             @error('price')
-      <span class="text-danger"> {{ $message }} </span>
-            @enderror
-        </div>
-    </div>
 
 
       <div class="col-md-6">
@@ -121,19 +152,21 @@
         </div>
     </div>
 
-
-
-     <div class="col-md-6">
+    <div class="col-md-6">
         <div class="mb-3">
-            <label for="firstname" class="form-label">Delivery Status    </label>
-            <input type="text" name="delivered" class="form-control @error('delivered') is-invalid @enderror" value="{{ $carpet-> delivered}}"  >
-             @error('delivered')
+            <label for="firstname" class="form-label">Delivery Status </label>
+           <select name="delivered" class="form-select" @error('delivered') is-invalid @enderror id="example-select">
+                    <option selected disabled >Select Status </option>
+                    <option value="Delivered" {{ $carpet->delivered == 'Delivered' ? 'selected' : '' }}>Delivered</option>
+                    <option value="Not Delivered" {{ $carpet->delivered == 'Not Delivered' ? 'selected' : '' }}>Not Delivered</option>
+
+                </select>
+                @error('delivered')
       <span class="text-danger"> {{ $message }} </span>
             @enderror
+
         </div>
     </div>
-
-
 
 
             </div> <!-- end row -->
@@ -158,6 +191,44 @@
                     </div> <!-- container -->
 
                 </div> <!-- content -->
+
+
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const sizeInput = document.getElementById('size');
+                        const multiplierInput = document.getElementById('multiplier');
+                        const priceInput = document.getElementById('price');
+
+                        // Function to calculate the carpet price
+                        function calculatePrice() {
+                            let sizeValue = sizeInput.value.trim();
+                            let computedSize = 0;
+
+                            // Check if the size input contains '*' or 'x' (case-insensitive)
+                            if (/[x\*]/i.test(sizeValue)) {
+                                // Split using a regular expression that matches '*' or 'x'
+                                const parts = sizeValue.split(/[*x]/i);
+                                if (parts.length === 2) {
+                                    const num1 = parseFloat(parts[0]);
+                                    const num2 = parseFloat(parts[1]);
+                                    if (!isNaN(num1) && !isNaN(num2)) {
+                                        computedSize = num1 * num2;
+                                    }
+                                }
+                            } else {
+                                // Otherwise, treat the input as a single number
+                                computedSize = parseFloat(sizeValue) || 0;
+                            }
+
+                            const multiplier = parseFloat(multiplierInput.value) || 0;
+                            priceInput.value = computedSize * multiplier;
+                        }
+
+                        // Update price when either the size or multiplier is changed
+                        sizeInput.addEventListener('input', calculatePrice);
+                        multiplierInput.addEventListener('input', calculatePrice);
+                    });
+                </script>
 
 
 

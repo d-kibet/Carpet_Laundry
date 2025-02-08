@@ -1,5 +1,6 @@
 @extends('admin_master')
 @section('admin')
+
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 
 <div class="page-content">
@@ -25,6 +26,14 @@
                             <label for="example-text-input" class="col-sm-2 col-form-label">Email</label>
                             <div class="col-sm-10">
                                 <input name="email" class="form-control" type="email" value="{{ $editData->email }}" id="example-text-input">
+                            </div>
+                        </div>
+                        <!-- end row -->
+
+                        <div class="row mb-3">
+                            <label for="example-text-input" class="col-sm-2 col-form-label">Phone</label>
+                            <div class="col-sm-10">
+                                <input name="phone" class="form-control" type="text" value="{{ $editData->phone }}" id="example-text-input">
                             </div>
                         </div>
                         <!-- end row -->

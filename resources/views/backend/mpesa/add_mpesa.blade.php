@@ -6,24 +6,22 @@
 
  <div class="content">
 
-                    <!-- Start Content-->
-                    <div class="container-fluid" style="margin-top: 20px;">
-
-                        <!-- start page title -->
-                        <div class="row">
+                    <!-- Page Title -->
+                        <div class="row mb-3">
                             <div class="col-12">
-                                <div class="page-title-box">
-                                    <div class="page-title-right">
-                                        <ol class="breadcrumb m-0">
-                                            <li class="breadcrumb-item"><a href="javascript: void(0);">Add Mpesa Record</a></li>
-
+                                <div class="page-title-box d-flex justify-content-between align-items-center">
+                                    <h4 class="page-title mb-0">Add Mpesa Record</h4>
+                                    <nav aria-label="breadcrumb">
+                                        <ol class="breadcrumb mb-0">
+                                            <li class="breadcrumb-item active" aria-current="page">
+                                                <a href="javascript:void(0);">Add Mpesa Record</a>
+                                            </li>
                                         </ol>
-                                    </div>
-                                    <h4 class="page-title">Add Mpesa Record</h4>
+                                    </nav>
                                 </div>
                             </div>
                         </div>
-                        <!-- end page title -->
+                     <!-- End Page Title -->
 
 <div class="row">
 

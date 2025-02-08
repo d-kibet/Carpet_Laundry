@@ -58,8 +58,14 @@
                                             <td>
 
                                                 <a href="{{ route('history.client',$item->id) }}" class="btn btn-info">History</a>
+
+                                                @if(Auth::user()->can('carpet.edit'))
                                         <a href="{{ route('edit.carpet',$item->id) }}" class="btn btn-secondary rounded-pill waves-effect">Edit</a>
+                                        @endif
+
+                                        @if(Auth::user()->can('carpet.delete'))
                                         <a href="{{ route('delete.carpet',$item->id) }}" class="btn btn-danger rounded-pill waves-effect waves-light" id="delete">Delete</a>
+                                        @endif
 
                                             </td>
                                         </tr>

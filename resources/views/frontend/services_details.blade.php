@@ -145,7 +145,7 @@
                                             placeholder="Service Date" data-target="#date1" data-toggle="datetimepicker" style="height: 55px;">
                                     </div>
                                 </div>
-                                <div class="col-12">
+                                <div class="col-12 col-sm-6">
                                     <select class="form-select border-0" style="height: 55px;">
                                         <option selected>Select A Service</option>
                                         <option value="1">Carpet Cleaning</option>
@@ -153,6 +153,11 @@
                                         <option value="3">Dry Cleaning</option>
                                     </select>
                                 </div>
+
+                                <div class="col-12 col-sm-6">
+                                    <input type="text" class="form-control border-0" placeholder="Your Location" style="height: 55px;">
+                                </div>
+
                                 <div class="col-12">
                                     <textarea class="form-control border-0" placeholder="Special Request"></textarea>
                                 </div>
