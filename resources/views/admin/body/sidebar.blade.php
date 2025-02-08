@@ -142,6 +142,21 @@
                 </li>
                 @endif
 
+                <li>
+                    <a href="javascript: void(0);" data-bs-toggle="collapse">
+                        <i class="fa-solid fa-sack-dollar"></i>
+                        <span>Database Backup</span>
+                    </a>
+                    <ul class="sub-menu" aria-expanded="false">
+
+
+                        <li><a href="{{ route('database.backup') }}">Database Backup</a></li>
+
+
+
+                    </ul>
+                </li>
+
                 <li class="menu-title">Pages</li>
 
 

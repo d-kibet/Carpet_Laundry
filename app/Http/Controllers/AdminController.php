@@ -9,6 +9,9 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Storage;
 
 class AdminController extends Controller
 {
@@ -71,6 +74,7 @@ class AdminController extends Controller
     public function StoreProfile(Request $request)
 {
     // Retrieve the authenticated user
+    /** @var \App\Models\User $user */
     $user = Auth::user();
 
     // Update user data from the request
@@ -280,5 +284,36 @@ public function DeleteAdmin($id){
     return redirect()->back()->with($notification);
 
 }// End Method
+
+
+    //////////////// Database Backup Method //////////////////
+
+    public function DatabaseBackup(){
+        return view('admin.db_backup')->with('files',File::allFiles(storage_path('/app/Raha')));
+    }// End Method
+
+    public function BackupNow(){
+        Artisan::call('backup:run');
+          $notification = array(
+            'message' => 'Database Backup Successfully',
+            'alert-type' => 'success'
+        );
+        return redirect()->back()->with($notification);
+    }// End Method
+
+    public function DownloadDatabase($getFilename){
+        $path = storage_path('app\Raha/'.$getFilename);
+        return response()->download($path);
+    }// End Method
+
+    public function DeleteDatabase($getFilename){
+
+        Storage::delete('Raha/'.$getFilename);
+         $notification = array(
+            'message' => 'Database Deleted Successfully',
+            'alert-type' => 'success'
+        );
+        return redirect()->back()->with($notification);
+    }// End Method
 
 }
