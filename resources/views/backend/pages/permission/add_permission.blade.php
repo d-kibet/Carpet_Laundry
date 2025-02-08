@@ -53,6 +53,7 @@
         <option value="mpesa"> Mpesa</option>
         <option value="roles"> Roles</option>
         <option value="user"> User</option>
+        <option value="database"> Database</option>
 
                 </select>
 

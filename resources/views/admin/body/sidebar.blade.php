@@ -142,20 +142,22 @@
                 </li>
                 @endif
 
+                @if(Auth::user()->can('database.menu'))
                 <li>
                     <a href="javascript: void(0);" data-bs-toggle="collapse">
-                        <i class="fa-solid fa-sack-dollar"></i>
+                        <i class="fa-solid fa-database"></i>
                         <span>Database Backup</span>
                     </a>
                     <ul class="sub-menu" aria-expanded="false">
 
-
+                        @if(Auth::user()->can('database.all'))
                         <li><a href="{{ route('database.backup') }}">Database Backup</a></li>
-
+                        @endif
 
 
                     </ul>
                 </li>
+                @endif
 
                 <li class="menu-title">Pages</li>
 

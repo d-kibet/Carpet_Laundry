@@ -162,7 +162,7 @@ Route::controller(AdminController::class)->group(function(){
     // Database Backup
     Route::get('/database/backup','DatabaseBackup')->name('database.backup');
     Route::get('/backup/now','BackupNow');
-    Route::get('{getFilename}','DownloadDatabase');
+    Route::get('download/{getFilename}','DownloadDatabase');
     Route::get('/delete/database/{getFilename}','DeleteDatabase');
 
    });

@@ -1,12 +1,6 @@
 @extends('admin_master')
 @section('admin')
 
-<!-- DataTables CSS -->
-<link rel="stylesheet" href="https://cdn.datatables.net/2.2.1/css/dataTables.dataTables.min.css">
-
-<!-- DataTables JS -->
-<script src="https://cdn.datatables.net/2.2.1/js/dataTables.min.js"></script>
-
 <div class="content">
     <!-- Start Content-->
     <div class="container-fluid">
@@ -28,7 +22,7 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-body">
-                        <table id="basic-datatable" class="table dt-responsive nowrap w-100">
+                        <table id="myTable" class="table dt-responsive nowrap w-100">
                             <thead>
                                 <tr>
                                     <th>Date</th>
@@ -40,23 +34,22 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($mpesa as $key => $item)
-                                <tr>
-                                    <td>{{ $item->date }}</td>
-                                    <td>{{ $item->cash }}</td>
-                                    <td>{{ $item->float }}</td>
-                                    <!-- If you have a working field, display it; otherwise, leave blank or update as needed -->
-                                    <td>{{ $item->working ?? '' }}</td>
-                                    <td>{{ $item->account }}</td>
-                                    <td>
-                                        <a href="{{ route('edit.mpesa', $item->id) }}" class="btn btn-blue rounded-pill waves-effect waves-light" title="Edit">
-                                            <i class="fa fa-pencil" aria-hidden="true"></i>
-                                        </a>
-                                        <a href="{{ route('delete.mpesa', $item->id) }}" class="btn btn-danger rounded-pill waves-effect waves-light" id="delete" title="Delete">
-                                            <i class="fa fa-trash" aria-hidden="true"></i>
-                                        </a>
-                                    </td>
-                                </tr>
+                                @foreach($mpesa as $item)
+                                    <tr>
+                                        <td>{{ $item->date }}</td>
+                                        <td>{{ $item->cash }}</td>
+                                        <td>{{ $item->float }}</td>
+                                        <td>{{ $item->working ?? '' }}</td>
+                                        <td>{{ $item->account }}</td>
+                                        <td>
+                                            <a href="{{ route('edit.mpesa', $item->id) }}" class="btn btn-blue rounded-pill waves-effect waves-light" title="Edit">
+                                                <i class="fa fa-pencil" aria-hidden="true"></i>
+                                            </a>
+                                            <a href="{{ route('delete.mpesa', $item->id) }}" class="btn btn-danger rounded-pill waves-effect waves-light" id="delete" title="Delete">
+                                                <i class="fa fa-trash" aria-hidden="true"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
                                 @endforeach
                             </tbody>
                         </table>
