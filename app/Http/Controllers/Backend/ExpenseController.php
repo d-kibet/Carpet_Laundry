@@ -56,8 +56,8 @@ class ExpenseController extends Controller
     {
         $categories = ExpenseCategory::active()->ordered()->get();
         $recentVendors = Expense::select('vendor_name')
-                               ->distinct()
-                               ->orderBy('created_at', 'desc')
+                               ->groupBy('vendor_name')
+                               ->orderByRaw('MAX(created_at) DESC')
                                ->limit(10)
                                ->pluck('vendor_name');
 
@@ -119,8 +119,8 @@ class ExpenseController extends Controller
     {
         $categories = ExpenseCategory::active()->ordered()->get();
         $recentVendors = Expense::select('vendor_name')
-                               ->distinct()
-                               ->orderBy('created_at', 'desc')
+                               ->groupBy('vendor_name')
+                               ->orderByRaw('MAX(created_at) DESC')
                                ->limit(10)
                                ->pluck('vendor_name');
 
