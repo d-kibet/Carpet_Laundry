@@ -22,7 +22,7 @@ class NotificationController extends Controller
                   ->whereJsonContains('data->service_type', $request->type);
         }
         
-        $notifications = $query->orderBy('created_at', 'desc')->paginate(20);
+        $notifications = $query->orderBy('created_at', 'desc')->paginate(10);
         $currentFilter = $request->get('type', 'all');
         
         // Get notification counts by service type
@@ -96,7 +96,7 @@ class NotificationController extends Controller
             $query->whereJsonContains('data->service_type', $request->type);
         }
         
-        $notifications = $query->orderBy('created_at', 'desc')->paginate(15);
+        $notifications = $query->orderBy('created_at', 'desc')->paginate(10);
         $currentFilter = $request->get('type', 'all');
         
         // Get overdue notification counts by service type

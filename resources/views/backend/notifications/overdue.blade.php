@@ -159,12 +159,13 @@
                         </div>
                     @endforelse
 
-                    <!-- Pagination -->
+                    {{-- Pagination --}}
                     @if($notifications->hasPages())
                         <div class="d-flex justify-content-center mt-4">
-                            {{ $notifications->appends(request()->query())->links() }}
+                            {{ $notifications->appends(request()->query())->links('custom.pagination') }}
                         </div>
                     @endif
+
                 </div>
             </div>
         </div>

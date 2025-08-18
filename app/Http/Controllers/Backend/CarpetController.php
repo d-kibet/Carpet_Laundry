@@ -21,14 +21,77 @@ class CarpetController extends Controller
         $today = Carbon::today()->toDateString();
         $yesterday = Carbon::yesterday()->toDateString();
 
-        // Retrieve only records where date_received is either today or yesterday.
+        // Get recent carpets for the table (received today or yesterday)
         $carpet = Carpet::whereDate('date_received', $today)
                     ->orWhereDate('date_received', $yesterday)
-                    // Optionally, order them so that today's records come first.
+                    // Order them so that today's records come first.
                     ->orderByRaw('(DATE(date_received) = CURDATE()) DESC, date_received DESC')
                     ->get();
 
-        return view('admin.index', compact('carpet'));
+        // Count carpets actually washed/processed today (using date_received as processing date)
+        $todayCarpetCount = Carpet::whereDate('date_received', $today)->count();
+
+        // Count new clients today using unique phone numbers and unique IDs
+        // A client is "new" if this is their first carpet service ever
+        $todayNewClientCount = Carpet::whereDate('date_received', $today)
+            ->whereNotExists(function ($query) use ($today) {
+                $query->select(\DB::raw(1))
+                    ->from('carpets as c2')
+                    ->whereColumn('c2.phone', 'carpets.phone')
+                    ->where('c2.date_received', '<', $today);
+            })
+            ->distinct('phone')
+            ->count('phone');
+
+        // Also check laundry for truly new clients across all services
+        $todayUniqueNewClients = collect();
+        
+        // Get carpet clients from today
+        $todayCarpetClients = Carpet::whereDate('date_received', $today)
+            ->select('phone', 'name', 'date_received')
+            ->get();
+            
+        // Check if they exist in carpet before today OR in laundry before today
+        foreach ($todayCarpetClients as $client) {
+            $existsInCarpet = Carpet::where('phone', $client->phone)
+                ->where('date_received', '<', $today)
+                ->exists();
+                
+            $existsInLaundry = \App\Models\Laundry::where('phone', $client->phone)
+                ->where('date_received', '<', $today)
+                ->exists();
+                
+            if (!$existsInCarpet && !$existsInLaundry) {
+                $todayUniqueNewClients->push($client->phone);
+            }
+        }
+        
+        // Get laundry clients from today and check if they're truly new
+        $todayLaundryClients = \App\Models\Laundry::whereDate('date_received', $today)
+            ->select('phone', 'name', 'date_received')
+            ->get();
+            
+        foreach ($todayLaundryClients as $client) {
+            if ($todayUniqueNewClients->contains($client->phone)) {
+                continue; // Already counted from carpet
+            }
+            
+            $existsInCarpet = Carpet::where('phone', $client->phone)
+                ->where('date_received', '<', $today)
+                ->exists();
+                
+            $existsInLaundry = \App\Models\Laundry::where('phone', $client->phone)
+                ->where('date_received', '<', $today)
+                ->exists();
+                
+            if (!$existsInCarpet && !$existsInLaundry) {
+                $todayUniqueNewClients->push($client->phone);
+            }
+        }
+
+        $todayClientCount = $todayUniqueNewClients->unique()->count();
+
+        return view('admin.index', compact('carpet', 'todayCarpetCount', 'todayClientCount'));
     } // End Method
 
     public function AddCarpet(){

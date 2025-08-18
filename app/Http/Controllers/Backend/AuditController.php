@@ -48,7 +48,7 @@ class AuditController extends Controller
             });
         }
 
-        $audits = $query->paginate(25);
+        $audits = $query->paginate(15);
 
         // Get filter options
         $users = User::select('id', 'name')->orderBy('name')->get();

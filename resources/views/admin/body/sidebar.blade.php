@@ -111,23 +111,47 @@
                 </li>
                 @endif
 
+                @if(Auth::user()->can('mpesa.menu'))
+                <li>
+                    <a href="javascript: void(0);" data-bs-toggle="collapse">
+                        <i class="fas fa-receipt"></i>
+                        <span>Expenses</span>
+                    </a>
+                    <ul class="sub-menu" aria-expanded="false">
+
+                        @if(Auth::user()->can('mpesa.all'))
+                        <li><a href="{{ route('expenses.index') }}">All Expenses</a></li>
+                        @endif
+
+                        @if(Auth::user()->can('mpesa.add'))
+                        <li><a href="{{ route('expenses.create') }}">Add Expense</a></li>
+                        @endif
+
+                        @if(Auth::user()->can('mpesa.compare'))
+                        <li><a href="{{ route('expenses.dashboard') }}">Expense Dashboard</a></li>
+                        @endif
+
+                    </ul>
+                </li>
+                @endif
+
                 <!-- System Management -->
                 <li>
                     <a href="javascript: void(0);" data-bs-toggle="collapse">
                         <i class="ri-settings-4-line"></i>
-                        <span>System</span>
+                        <span>Follow-Ups</span>
                     </a>
                     <ul class="sub-menu" aria-expanded="false">
                         <li><a href="{{ route('notifications.index') }}">
                             <i class="ri-notification-3-line me-2"></i>Notifications
                         </a></li>
-                        
+
                         @if(Auth::user()->can('mpesa.compare'))
                         <li><a href="{{ route('audit.index') }}">
                             <i class="ri-file-list-3-line me-2"></i>Audit Trail
                         </a></li>
                         @endif
-                        
+
                         <li><a href="{{ route('notifications.overdue') }}">
                             <i class="ri-time-line me-2"></i>Overdue Alerts
                         </a></li>

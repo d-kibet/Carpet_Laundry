@@ -166,10 +166,13 @@
                         </table>
                     </div>
 
-                    <!-- Pagination -->
-                    <div class="d-flex justify-content-center">
-                        {{ $audits->appends(request()->query())->links() }}
-                    </div>
+                    {{-- Pagination --}}
+                    @if($audits->hasPages())
+                        <div class="d-flex justify-content-center mt-4">
+                            {{ $audits->appends(request()->query())->links('custom.pagination') }}
+                        </div>
+                    @endif
+
                 </div>
             </div>
         </div>

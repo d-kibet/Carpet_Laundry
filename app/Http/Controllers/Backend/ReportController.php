@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use App\Models\Carpet;
 use App\Models\Mpesa;
 use App\Models\Laundry;
+use App\Models\Expense;
+use App\Models\ExpenseCategory;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -154,8 +156,10 @@ class ReportController extends Controller
 
         if ($serviceType === 'carpet') {
             return $this->getCarpetPerformanceData($fromDate, $toDate);
-        } else {
+        } elseif ($serviceType === 'laundry') {
             return $this->getLaundryPerformanceData($fromDate, $toDate);
+        } else {
+            return $this->getExpensePerformanceData($fromDate, $toDate);
         }
     }
 
@@ -485,6 +489,125 @@ class ReportController extends Controller
                 'returning' => array_sum(array_column($weeklyData, 'returning'))
             ]
         ];
+    }
+
+    private function getExpensePerformanceData($fromDate, $toDate)
+    {
+        // Get expense data for the period
+        $expenses = Expense::with(['category', 'creator'])
+            ->whereBetween('expense_date', [$fromDate, $toDate])
+            ->approved()
+            ->orderBy('expense_date', 'desc')
+            ->get();
+
+        // Calculate metrics
+        $totalExpenses = $expenses->sum('amount');
+        $totalTransactions = $expenses->count();
+        $avgDailyExpenses = $totalTransactions / max(1, $fromDate->diffInDays($toDate) + 1);
+        
+        // Category breakdown
+        $categoryBreakdown = $expenses->groupBy('category_id')->map(function($categoryExpenses) {
+            return [
+                'category' => $categoryExpenses->first()->category->name,
+                'amount' => $categoryExpenses->sum('amount'),
+                'count' => $categoryExpenses->count(),
+                'color' => $categoryExpenses->first()->category->color_code
+            ];
+        })->sortByDesc('amount');
+
+        // Daily expense data for chart
+        $dailyExpenses = $expenses->groupBy(function($item) {
+            return Carbon::parse($item->expense_date)->format('Y-m-d');
+        })->map(function($dayExpenses) {
+            return $dayExpenses->sum('amount');
+        });
+
+        // Fill missing dates with zero values
+        $expenseLabels = [];
+        $expenseData = [];
+        $currentDate = $fromDate->copy();
+        
+        while ($currentDate <= $toDate) {
+            $dateStr = $currentDate->format('Y-m-d');
+            $expenseLabels[] = $currentDate->format('M d');
+            $expenseData[] = $dailyExpenses[$dateStr] ?? 0;
+            $currentDate->addDay();
+        }
+
+        // Top vendors
+        $topVendors = $expenses->groupBy('vendor_name')
+            ->map(function($vendorExpenses) {
+                return [
+                    'vendor' => $vendorExpenses->first()->vendor_name,
+                    'amount' => $vendorExpenses->sum('amount'),
+                    'count' => $vendorExpenses->count()
+                ];
+            })
+            ->sortByDesc('amount')
+            ->take(5);
+
+        // Monthly comparison
+        $thisMonth = $expenses->filter(function($expense) {
+            return $expense->expense_date->month == Carbon::now()->month;
+        })->sum('amount');
+        
+        $lastMonth = Expense::whereBetween('expense_date', [
+                Carbon::now()->subMonth()->startOfMonth(),
+                Carbon::now()->subMonth()->endOfMonth()
+            ])
+            ->approved()
+            ->sum('amount');
+
+        $monthlyGrowth = $lastMonth > 0 ? (($thisMonth - $lastMonth) / $lastMonth) * 100 : 0;
+
+        return response()->json([
+            'metrics' => [
+                'total_revenue' => $totalExpenses, // Using same structure for consistency
+                'paid_revenue' => $totalExpenses, // All approved expenses are "paid"
+                'total_orders' => $totalTransactions,
+                'unpaid_orders' => 0, // No unpaid concept for expenses
+                'unpaid_revenue' => 0,
+                'payment_rate' => 100, // All approved expenses are 100% "paid"
+                'avg_daily_orders' => round($avgDailyExpenses, 1),
+                'period_start' => $fromDate->format('M d, Y')
+            ],
+            'charts' => [
+                'revenue' => [
+                    'labels' => $expenseLabels,
+                    'total' => $expenseData,
+                    'paid' => $expenseData, // Same as total for expenses
+                    'unpaid' => array_fill(0, count($expenseData), 0) // No unpaid expenses
+                ],
+                'payment' => [
+                    'paid' => $totalExpenses,
+                    'unpaid' => 0 // No unpaid concept for approved expenses
+                ],
+                'volume' => [
+                    'labels' => $expenseLabels,
+                    'data' => collect($expenseLabels)->map(function($label, $index) use ($expenses, $fromDate) {
+                        $date = $fromDate->copy()->addDays($index)->format('Y-m-d');
+                        return $expenses->filter(function($expense) use ($date) {
+                            return $expense->expense_date->format('Y-m-d') === $date;
+                        })->count();
+                    })->values()->toArray()
+                ],
+                'categories' => [
+                    'labels' => $categoryBreakdown->pluck('category')->values()->toArray(),
+                    'data' => $categoryBreakdown->pluck('amount')->values()->toArray(),
+                    'colors' => $categoryBreakdown->pluck('color')->values()->toArray()
+                ]
+            ],
+            'operational' => [
+                'pending_deliveries' => Expense::pending()->count(),
+                'completed_today' => $expenses->filter(function($expense) {
+                    return $expense->expense_date->isToday();
+                })->count(),
+                'avg_processing_days' => 0, // Not applicable for expenses
+                'new_customers_rate' => round($monthlyGrowth, 1), // Using monthly growth instead
+                'top_vendors' => $topVendors->values()->toArray(),
+                'category_breakdown' => $categoryBreakdown->values()->toArray()
+            ]
+        ]);
     }
 
 }

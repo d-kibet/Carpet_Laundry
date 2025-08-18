@@ -612,6 +612,34 @@
             background-position: 200% 0;
         }
     }
+    
+    
+    
+    
+    /* Ensure no element causes overflow */
+    .page-content {
+        overflow-x: hidden;
+    }
+    
+    /* Fix any Bootstrap components that might have oversized arrows */
+    .dropdown-toggle::after,
+    .dropup .dropdown-toggle::after,
+    .dropend .dropdown-toggle::after,
+    .dropstart .dropdown-toggle::before {
+        display: inline-block;
+        margin-left: 0.255em;
+        vertical-align: 0.255em;
+        content: "";
+        border-top: 0.3em solid;
+        border-right: 0.3em solid transparent;
+        border-bottom: 0;
+        border-left: 0.3em solid transparent;
+        width: auto !important;
+        height: auto !important;
+        font-size: inherit !important;
+    }
+    
+    
 
     /* Notification Dropdown Improvements */
     .dropdown-menu {

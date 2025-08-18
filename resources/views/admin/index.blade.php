@@ -1,17 +1,7 @@
 @extends('admin_master')
 @section('admin')
 
-@php
-    use Carbon\Carbon;
-
-    // Count carpets washed today using the date_received field.
-    // Assuming $carpet is a Collection passed from the controller.
-    $todayCarpetCount = $carpet->where('date_received', Carbon::today()->toDateString())->count();
-
-    // Count today's clients.
-    // (This example reuses the Carpet model; adjust if you have a dedicated Client model.)
-    $todayClientCount = \App\Models\Carpet::whereDate('created_at', Carbon::today()->toDateString())->count();
-@endphp
+{{-- Dashboard metrics are now calculated in the controller for better performance and accuracy --}}
 
 
 
@@ -41,7 +31,7 @@
                     <div class="card-body">
                         <div class="d-flex align-items-center">
                             <div class="flex-grow-1">
-                                <p class="text-truncate font-size-14 mb-2">Carpets washed today</p>
+                                <p class="text-truncate font-size-14 mb-2">Carpets Processed Today</p>
                                 <h4 class="mb-2">{{ $todayCarpetCount }}</h4>
 
                             </div>
@@ -61,7 +51,7 @@
                     <div class="card-body">
                         <div class="d-flex align-items-center">
                             <div class="flex-grow-1">
-                                <p class="text-truncate font-size-14 mb-2">Recent Clients</p>
+                                <p class="text-truncate font-size-14 mb-2">New Clients Today</p>
                                 <h4 class="mb-2">{{ $todayClientCount }}</h4>
 
                             </div>

@@ -109,7 +109,7 @@ Route::controller(ReportController::class)->group(function(){
     Route::get('reports/landing','index')->name('reports.specific_report');
     Route::post('reports/landing/handle','handle')->name('reports.specific_report.handle');
     Route::get('reports/performance','performance')->name('reports.performance');
-    Route::post('reports/performance-data','performanceData')->name('api.performance.data');
+    Route::post('reports/performance-data','performanceData')->name('reports.performance.data');
 
     });
 
@@ -212,6 +212,23 @@ Route::controller(App\Http\Controllers\Backend\NotificationController::class)->m
     Route::post('/notifications/mark-all-read', 'markAllAsRead')->name('notifications.mark-all-read');
     Route::delete('/notifications/{id}', 'destroy')->name('notifications.delete');
     Route::get('/notifications/overdue', 'overdueDeliveries')->name('notifications.overdue');
+});
+
+// Expense Routes
+Route::controller(App\Http\Controllers\Backend\ExpenseController::class)->middleware(['auth'])->group(function(){
+    Route::get('/expenses', 'index')->name('expenses.index')->middleware('permission:mpesa.all');
+    Route::get('/expenses/create', 'create')->name('expenses.create')->middleware('permission:mpesa.add');
+    Route::post('/expenses', 'store')->name('expenses.store');
+    Route::get('/expenses/{expense}', 'show')->name('expenses.show');
+    Route::get('/expenses/{expense}/edit', 'edit')->name('expenses.edit');
+    Route::put('/expenses/{expense}', 'update')->name('expenses.update');
+    Route::delete('/expenses/{expense}', 'destroy')->name('expenses.destroy');
+    Route::post('/expenses/quick-add', 'quickAdd')->name('expenses.quickAdd');
+    Route::post('/expenses/{expense}/approve', 'approve')->name('expenses.approve');
+    Route::post('/expenses/{expense}/reject', 'reject')->name('expenses.reject');
+    Route::get('/expenses-dashboard', 'dashboard')->name('expenses.dashboard');
+    Route::get('reports/expenses/month', 'viewExpensesByMonth')->name('reports.expenses.viewMonth');
+    Route::get('reports/expenses/month/download', 'downloadExpensesByMonth')->name('reports.expenses.downloadMonth');
 });
 
 // Reports API Routes (for performance dashboard)
