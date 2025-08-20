@@ -205,6 +205,30 @@ class ExpenseController extends Controller
         ]);
     }
 
+    public function serveReceipt(Expense $expense)
+    {
+        // Check if user has permission to view expense
+        if (!$expense->receipt_image) {
+            abort(404, 'Receipt not found');
+        }
+
+        // Check if file exists
+        if (!Storage::disk('public')->exists($expense->receipt_image)) {
+            abort(404, 'Receipt file not found');
+        }
+
+        // Get file path and info
+        $filePath = Storage::disk('public')->path($expense->receipt_image);
+        $mimeType = Storage::disk('public')->mimeType($expense->receipt_image);
+        
+        // Serve file with proper headers
+        return response()->file($filePath, [
+            'Content-Type' => $mimeType,
+            'Cache-Control' => 'public, max-age=31536000',
+            'Expires' => gmdate('D, d M Y H:i:s \G\M\T', time() + 31536000),
+        ]);
+    }
+
     public function quickAdd(Request $request)
     {
         $validated = $request->validate([

@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AdminController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\Backend\CarpetController;
 use App\Http\Controllers\Backend\LaundryController;
 use App\Http\Controllers\Backend\MpesaController;
@@ -224,6 +225,22 @@ Route::controller(App\Http\Controllers\Backend\ExpenseController::class)->middle
     Route::get('/expenses/{expense}/edit', 'edit')->name('expenses.edit');
     Route::put('/expenses/{expense}', 'update')->name('expenses.update');
     Route::delete('/expenses/{expense}', 'destroy')->name('expenses.destroy');
+    Route::get('/expenses/{expense}/receipt', 'serveReceipt')->name('expense.receipt');
+    Route::get('/expenses/debug/storage', function() {
+        $files = collect(Storage::disk('public')->files('receipts'))->take(5);
+        $publicPath = public_path('storage/receipts');
+        $storagePath = storage_path('app/public/receipts');
+        
+        return response()->json([
+            'storage_files' => $files,
+            'public_path_exists' => is_dir($publicPath),
+            'storage_path_exists' => is_dir($storagePath),
+            'symlink_exists' => is_link(public_path('storage')),
+            'symlink_target' => is_link(public_path('storage')) ? readlink(public_path('storage')) : null,
+            'app_url' => config('app.url'),
+            'environment' => app()->environment(),
+        ]);
+    })->name('expenses.debug.storage')->middleware('auth');
     Route::post('/expenses/quick-add', 'quickAdd')->name('expenses.quickAdd');
     Route::post('/expenses/{expense}/approve', 'approve')->name('expenses.approve');
     Route::post('/expenses/{expense}/reject', 'reject')->name('expenses.reject');

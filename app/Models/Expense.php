@@ -86,6 +86,16 @@ class Expense extends Model
             return null;
         }
 
+        // Always use the route-based serving for consistency across environments
+        return route('expense.receipt', ['expense' => $this->id]);
+    }
+
+    public function getDirectReceiptUrlAttribute()
+    {
+        if (!$this->receipt_image) {
+            return null;
+        }
+
         return asset('storage/' . $this->receipt_image);
     }
 
