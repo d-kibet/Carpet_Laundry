@@ -6,6 +6,7 @@ use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 
 class Expense extends Model
 {
@@ -77,5 +78,23 @@ class Expense extends Model
             'amount' => $this->amount ?? null,
             'vendor' => $this->vendor_name ?? null,
         ];
+    }
+
+    public function getReceiptUrlAttribute()
+    {
+        if (!$this->receipt_image) {
+            return null;
+        }
+
+        return asset('storage/' . $this->receipt_image);
+    }
+
+    public function hasValidReceipt()
+    {
+        if (!$this->receipt_image) {
+            return false;
+        }
+
+        return Storage::disk('public')->exists($this->receipt_image);
     }
 }

@@ -116,12 +116,40 @@
                                 <div class="mb-3">
                                     <label class="form-label fw-bold">Receipt</label>
                                     <div class="mt-2">
-                                        <img src="{{ asset('storage/' . $expense->receipt_image) }}"
-                                             alt="Receipt"
-                                             class="img-thumbnail"
-                                             style="max-height: 300px; cursor: pointer;"
-                                             data-bs-toggle="modal"
-                                             data-bs-target="#receiptModal">
+                                        @if($expense->hasValidReceipt())
+                                            <div class="receipt-container">
+                                                <img src="{{ $expense->receipt_url }}"
+                                                     alt="Receipt"
+                                                     class="img-thumbnail"
+                                                     style="max-height: 300px; cursor: pointer; border: 2px solid #ddd;"
+                                                     data-bs-toggle="modal"
+                                                     data-bs-target="#receiptModal"
+                                                     loading="lazy"
+                                                     onerror="showImageError(this)">
+                                            </div>
+                                        @else
+                                            <div class="alert alert-warning d-flex align-items-center">
+                                                <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                                                <div>
+                                                    <strong>Receipt file not found</strong><br>
+                                                    <small class="text-muted">File path: {{ $expense->receipt_image }}</small>
+                                                </div>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        @else
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Receipt</label>
+                                    <div class="mt-2">
+                                        <div class="text-muted d-flex align-items-center">
+                                            <i class="fas fa-receipt fa-2x me-3 text-secondary"></i>
+                                            <span>No receipt uploaded for this expense</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -264,21 +292,99 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center">
-                <img src="{{ asset('storage/' . $expense->receipt_image) }}"
-                     alt="Receipt"
-                     class="img-fluid">
+                @if($expense->hasValidReceipt())
+                    <img src="{{ $expense->receipt_url }}"
+                         alt="Receipt"
+                         class="img-fluid"
+                         loading="lazy"
+                         onerror="showImageError(this, 'modal')">
+                @else
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        Receipt image could not be loaded
+                    </div>
+                @endif
             </div>
             <div class="modal-footer">
-                <a href="{{ asset('storage/' . $expense->receipt_image) }}"
-                   class="btn btn-primary"
-                   download="receipt-{{ $expense->id }}.jpg">
-                    <i class="fas fa-download me-1"></i>Download
-                </a>
+                @if($expense->hasValidReceipt())
+                    <a href="{{ $expense->receipt_url }}"
+                       class="btn btn-primary"
+                       download="receipt-{{ $expense->id }}-{{ date('Y-m-d') }}.{{ pathinfo($expense->receipt_image, PATHINFO_EXTENSION) }}"
+                       target="_blank">
+                        <i class="fas fa-download me-1"></i>Download Receipt
+                    </a>
+                @endif
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
 </div>
 @endif
+
+<script>
+/**
+ * Handle image loading errors with secure fallback
+ * @param {HTMLElement} img - The image element that failed to load
+ * @param {string} context - Context identifier ('modal' or 'thumbnail')
+ */
+function showImageError(img, context = 'thumbnail') {
+    // Prevent further error events
+    img.onerror = null;
+    
+    // Create error message container
+    const errorContainer = document.createElement('div');
+    errorContainer.className = 'alert alert-danger d-flex align-items-center';
+    errorContainer.innerHTML = `
+        <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+        <div>
+            <strong>Image Loading Error</strong><br>
+            <small class="text-muted">Receipt image could not be displayed</small>
+        </div>
+    `;
+    
+    // Replace image with error message
+    img.parentNode.replaceChild(errorContainer, img);
+    
+    // Log error for debugging (avoid exposing sensitive information)
+    console.warn('Image loading failed for expense receipt');
+}
+
+/**
+ * Validate file before upload (client-side security check)
+ * @param {HTMLElement} input - File input element
+ */
+function validateReceiptFile(input) {
+    const file = input.files[0];
+    if (!file) return true;
+    
+    // Check file size (max 2MB)
+    const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+    if (file.size > maxSize) {
+        alert('File size must be less than 2MB');
+        input.value = '';
+        return false;
+    }
+    
+    // Check file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+        alert('Only JPEG, PNG, and WebP images are allowed');
+        input.value = '';
+        return false;
+    }
+    
+    return true;
+}
+
+// Add event listeners for file inputs if they exist
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInputs = document.querySelectorAll('input[type="file"][name="receipt_image"]');
+    fileInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            validateReceiptFile(this);
+        });
+    });
+});
+</script>
 
 @endsection

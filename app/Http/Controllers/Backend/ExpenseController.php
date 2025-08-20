@@ -74,17 +74,32 @@ class ExpenseController extends Controller
             'expense_date' => 'required|date|before_or_equal:today',
             'payment_method' => 'required|in:Cash,M-Pesa,Bank Transfer,Cheque',
             'transaction_reference' => 'nullable|string|max:100',
-            'receipt_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'receipt_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048|dimensions:max_width=4000,max_height=4000',
             'notes' => 'nullable|string|max:500',
         ]);
 
         $category = ExpenseCategory::findOrFail($validated['category_id']);
 
-        // Handle receipt upload
+        // Handle receipt upload with enhanced security
         $receiptPath = null;
         if ($request->hasFile('receipt_image')) {
-            $receiptPath = $request->file('receipt_image')
-                                 ->store('receipts', 'public');
+            $file = $request->file('receipt_image');
+            
+            // Enhanced security validation
+            if ($file->isValid()) {
+                // Additional security checks
+                $allowedMimes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+                if (!in_array($file->getMimeType(), $allowedMimes)) {
+                    return redirect()->back()->withErrors(['receipt_image' => 'Invalid file type. Only JPEG, PNG, and WebP images are allowed.']);
+                }
+                
+                // Generate secure filename with proper extension
+                $extension = $file->getClientOriginalExtension();
+                $fileName = 'receipt_' . time() . '_' . bin2hex(random_bytes(8)) . '.' . strtolower($extension);
+                
+                // Store with custom name
+                $receiptPath = $file->storeAs('receipts', $fileName, 'public');
+            }
         }
 
         // Determine approval status
@@ -137,18 +152,34 @@ class ExpenseController extends Controller
             'expense_date' => 'required|date|before_or_equal:today',
             'payment_method' => 'required|in:Cash,M-Pesa,Bank Transfer,Cheque',
             'transaction_reference' => 'nullable|string|max:100',
-            'receipt_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'receipt_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048|dimensions:max_width=4000,max_height=4000',
             'notes' => 'nullable|string|max:500',
         ]);
 
-        // Handle receipt upload
+        // Handle receipt upload with enhanced security
         if ($request->hasFile('receipt_image')) {
-            // Delete old receipt if exists
-            if ($expense->receipt_image) {
-                Storage::disk('public')->delete($expense->receipt_image);
+            $file = $request->file('receipt_image');
+            
+            // Enhanced security validation
+            if ($file->isValid()) {
+                // Additional security checks
+                $allowedMimes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+                if (!in_array($file->getMimeType(), $allowedMimes)) {
+                    return redirect()->back()->withErrors(['receipt_image' => 'Invalid file type. Only JPEG, PNG, and WebP images are allowed.']);
+                }
+                
+                // Delete old receipt if exists
+                if ($expense->receipt_image && Storage::disk('public')->exists($expense->receipt_image)) {
+                    Storage::disk('public')->delete($expense->receipt_image);
+                }
+                
+                // Generate secure filename with proper extension
+                $extension = $file->getClientOriginalExtension();
+                $fileName = 'receipt_' . time() . '_' . bin2hex(random_bytes(8)) . '.' . strtolower($extension);
+                
+                // Store with custom name
+                $validated['receipt_image'] = $file->storeAs('receipts', $fileName, 'public');
             }
-            $validated['receipt_image'] = $request->file('receipt_image')
-                                                ->store('receipts', 'public');
         }
 
         $expense->update($validated);
