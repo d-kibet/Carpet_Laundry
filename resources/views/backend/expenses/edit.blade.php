@@ -175,13 +175,13 @@
                                 </div>
 
                                 <!-- Current Receipt Display -->
-                                @if($expense->receipt_image)
+                                @if($expense->hasValidReceipt())
                                 <div class="col-12">
                                     <label class="form-label">
                                         <i class="fas fa-image me-1"></i>Current Receipt
                                     </label>
                                     <div class="mb-2">
-                                        <img src="{{ asset('storage/' . $expense->receipt_image) }}" 
+                                        <img src="{{ $expense->receipt_preview_url ?: $expense->direct_receipt_url }}" 
                                              alt="Current Receipt" 
                                              class="img-thumbnail" 
                                              style="max-height: 150px;">
@@ -189,19 +189,31 @@
                                 </div>
                                 @endif
 
-                                <!-- Receipt Upload with Filepond -->
+                                <!-- Receipt Upload -->
                                 <div class="col-md-6">
                                     <label for="receipt_image" class="form-label">
-                                        <i class="fas fa-camera me-1"></i>{{ $expense->receipt_image ? 'Replace Receipt Photo' : 'Receipt Photo' }}
+                                        <i class="fas fa-camera me-1"></i>{{ $expense->hasValidReceipt() ? 'Replace Receipt Photo' : 'Receipt Photo' }}
                                     </label>
-                                    <input type="file" 
-                                           name="receipt_image" 
-                                           id="receipt_image" 
-                                           class="filepond" 
-                                           accept="image/*">
-                                    <div class="form-text">
-                                        <i class="fas fa-info-circle me-1"></i>
-                                        {{ $expense->receipt_image ? 'Take new photo to replace current receipt' : 'Take a photo or drag & drop' }} • Max 5MB • JPEG, PNG, WebP
+                                    <div class="upload-wrapper">
+                                        <input type="file" 
+                                               name="receipt_image" 
+                                               id="receipt_image" 
+                                               class="form-control"
+                                               accept="image/*"
+                                               capture="environment">
+                                        <div class="upload-help mt-2">
+                                            <div class="row">
+                                                <div class="col-12">
+                                                    <div class="d-flex align-items-center justify-content-between">
+                                                        <small class="text-muted">
+                                                            <i class="fas fa-camera me-1"></i>
+                                                            {{ $expense->hasValidReceipt() ? 'Take new photo to replace current receipt' : 'Tap to take photo or choose from gallery' }}
+                                                        </small>
+                                                        <small class="text-muted">Max 5MB</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                     @error('receipt_image')
                                         <div class="alert alert-danger mt-2">
@@ -278,130 +290,19 @@ document.addEventListener('DOMContentLoaded', function() {
         descriptionCount.textContent = this.value.length;
     });
 
-    // Initialize Filepond for receipt upload
-    FilePond.registerPlugin(
-        FilePondPluginImagePreview,
-        FilePondPluginImageCrop,
-        FilePondPluginImageResize,
-        FilePondPluginImageTransform,
-        FilePondPluginFileValidateType,
-        FilePondPluginFileValidateSize
-    );
-
-    const receiptInput = document.querySelector('#receipt_image');
-    if (receiptInput) {
-        const pond = FilePond.create(receiptInput, {
-            labelIdle: `
-                <div class="filepond-drop-area">
-                    <i class="fas fa-camera fa-3x text-primary mb-2"></i>
-                    <h5>Take New Photo or Drop Image</h5>
-                    <p class="text-muted">Replace current receipt with a new photo<br>or drag & drop an image file</p>
-                </div>
-            `,
-            acceptedFileTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'],
-            maxFileSize: '2MB',
-            maxFiles: 1,
-            allowMultiple: false,
-            allowImagePreview: true,
-            allowImageCrop: true,
-            allowImageResize: true,
-            allowImageTransform: true,
-            imageCropAspectRatio: null,
-            imageResizeTargetWidth: 1200,
-            imageResizeTargetHeight: 1200,
-            imageResizeMode: 'cover',
-            imageResizeUpscale: false,
-            credits: false,
-            instantUpload: false,
-            
-            stylePanelLayout: 'compact circle',
-            styleLoadIndicatorPosition: 'center bottom',
-            styleProgressIndicatorPosition: 'right bottom',
-            styleButtonRemoveItemPosition: 'left bottom',
-            styleButtonProcessItemPosition: 'right bottom',
-            
-            onaddfile: (error, file) => {
-                if (!error) {
-                    console.log('New receipt file added:', file.filename);
-                }
-            },
-            
-            onerror: (error) => {
-                console.error('FilePond error:', error);
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'alert alert-danger mt-2';
-                errorDiv.innerHTML = `
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    Upload failed: ${error.main || 'Please try again'}
-                `;
-                receiptInput.parentNode.appendChild(errorDiv);
-                setTimeout(() => errorDiv.remove(), 5000);
-            }
-        });
-    }
+    // File upload is now handled by standard HTML form submission
 });
 </script>
 
-<!-- Filepond CSS -->
-<link href="https://unpkg.com/filepond@^4/dist/filepond.css" rel="stylesheet">
-<link href="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css" rel="stylesheet">
-
-<!-- Filepond JavaScript -->
-<script src="https://unpkg.com/filepond@^4/dist/filepond.js"></script>
-<script src="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.js"></script>
-<script src="https://unpkg.com/filepond-plugin-image-crop/dist/filepond-plugin-image-crop.js"></script>
-<script src="https://unpkg.com/filepond-plugin-image-resize/dist/filepond-plugin-image-resize.js"></script>
-<script src="https://unpkg.com/filepond-plugin-image-transform/dist/filepond-plugin-image-transform.js"></script>
-<script src="https://unpkg.com/filepond-plugin-file-validate-type/dist/filepond-plugin-file-validate-type.js"></script>
-<script src="https://unpkg.com/filepond-plugin-file-validate-size/dist/filepond-plugin-file-validate-size.js"></script>
-
 <style>
-/* Custom Filepond Styling */
-.filepond--root {
-    margin-bottom: 1rem;
+/* Mobile-optimized file input styling */
+.form-control[type="file"] {
+    padding: 0.5rem;
 }
 
-.filepond--drop-label {
-    color: #6c757d;
-    background-color: #f8f9fa;
-    border: 2px dashed #dee2e6;
-    border-radius: 12px;
-    padding: 2rem;
-    text-align: center;
-    transition: all 0.3s ease;
-}
-
-.filepond--drop-label:hover {
-    background-color: #e9ecef;
-    border-color: #007bff;
-    color: #007bff;
-}
-
-.filepond-drop-area {
-    padding: 1rem;
-}
-
-.filepond--panel-root {
-    border-radius: 12px;
-    background-color: transparent;
-}
-
-.filepond--image-preview-wrapper {
-    border-radius: 8px;
-}
-
-/* Mobile optimizations */
 @media (max-width: 768px) {
-    .filepond--drop-label {
-        padding: 1.5rem 1rem;
-    }
-    
-    .filepond-drop-area h5 {
-        font-size: 1.1rem;
-    }
-    
-    .filepond-drop-area p {
-        font-size: 0.9rem;
+    .upload-help small {
+        font-size: 0.8rem;
     }
 }
 </style>

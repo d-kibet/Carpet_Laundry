@@ -217,39 +217,26 @@
                                     <label for="receipt_image" class="form-label">
                                         <i class="fas fa-camera me-1"></i>Receipt Photo
                                     </label>
-                                    
-                                    <!-- Mobile-Friendly Upload Area -->
-                                    <div class="upload-container">
-                                        <div class="upload-area" id="uploadArea" style="border: 2px dashed #dee2e6; border-radius: 12px; padding: 2rem; text-align: center; background: #f8f9fa; transition: all 0.3s ease; cursor: pointer;">
-                                            <div class="upload-content" id="uploadContent">
-                                                <i class="fas fa-camera fa-3x text-primary mb-3"></i>
-                                                <h5 class="mb-2">Take Photo or Upload</h5>
-                                                <p class="text-muted mb-3">Tap to take a photo with your camera or choose from gallery</p>
-                                                <button type="button" class="btn btn-primary" id="uploadBtn">
-                                                    <i class="fas fa-camera me-2"></i>Choose Photo
-                                                </button>
-                                            </div>
-                                            <div class="upload-preview d-none" id="uploadPreview">
-                                                <img id="previewImage" src="" alt="Preview" class="img-thumbnail mb-2" style="max-height: 200px;">
-                                                <div class="upload-info">
-                                                    <p id="fileName" class="text-muted mb-2"></p>
-                                                    <button type="button" class="btn btn-sm btn-outline-danger" id="removeBtn">
-                                                        <i class="fas fa-times"></i> Remove
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
+                                    <div class="upload-wrapper">
                                         <input type="file" 
                                                name="receipt_image" 
                                                id="receipt_image" 
+                                               class="form-control"
                                                accept="image/*"
-                                               capture="environment"
-                                               style="display: none;">
-                                    </div>
-                                    
-                                    <div class="form-text mt-2">
-                                        <i class="fas fa-info-circle me-1"></i>
-                                        Take a photo or drag & drop • Max 5MB • JPEG, PNG, WebP
+                                               capture="environment">
+                                        <div class="upload-help mt-2">
+                                            <div class="row">
+                                                <div class="col-12">
+                                                    <div class="d-flex align-items-center justify-content-between">
+                                                        <small class="text-muted">
+                                                            <i class="fas fa-camera me-1"></i>
+                                                            Tap to take photo or choose from gallery
+                                                        </small>
+                                                        <small class="text-muted">Max 5MB</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                     @error('receipt_image')
                                         <div class="alert alert-danger mt-2">
@@ -389,114 +376,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize character count
     descriptionCount.textContent = descriptionTextarea.value.length;
-    
-    // Simple Upload Handler
-    const uploadArea = document.getElementById('uploadArea');
-    const uploadBtn = document.getElementById('uploadBtn');
-    const uploadContent = document.getElementById('uploadContent');
-    const uploadPreview = document.getElementById('uploadPreview');
-    const previewImage = document.getElementById('previewImage');
-    const fileName = document.getElementById('fileName');
-    const removeBtn = document.getElementById('removeBtn');
-    const fileInput = document.getElementById('receipt_image');
-    
-    // File input change handler
-    function handleFileSelect(event) {
-        const file = event.target.files[0];
-        if (file) {
-            // Validate file
-            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-            const maxSize = 5 * 1024 * 1024; // 5MB
-            
-            if (!allowedTypes.includes(file.type)) {
-                alert('Please select a valid image file (JPEG, PNG, WebP)');
-                return;
-            }
-            
-            if (file.size > maxSize) {
-                alert('File size must be less than 5MB');
-                return;
-            }
-            
-            // Show preview
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                previewImage.src = e.target.result;
-                fileName.textContent = file.name + ' (' + (file.size / 1024 / 1024).toFixed(2) + ' MB)';
-                uploadContent.classList.add('d-none');
-                uploadPreview.classList.remove('d-none');
-                uploadArea.style.borderColor = '#28a745';
-                uploadArea.style.backgroundColor = '#f8fff9';
-            };
-            reader.readAsDataURL(file);
-        }
-    }
-    
-    // Remove file handler
-    function removeFile() {
-        fileInput.value = '';
-        uploadContent.classList.remove('d-none');
-        uploadPreview.classList.add('d-none');
-        uploadArea.style.borderColor = '#dee2e6';
-        uploadArea.style.backgroundColor = '#f8f9fa';
-    }
-    
-    // Event listeners
-    uploadBtn.addEventListener('click', () => fileInput.click());
-    uploadArea.addEventListener('click', () => fileInput.click());
-    removeBtn.addEventListener('click', removeFile);
-    fileInput.addEventListener('change', handleFileSelect);
-    
-    // Drag and drop handlers
-    uploadArea.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        uploadArea.style.borderColor = '#007bff';
-        uploadArea.style.backgroundColor = '#f0f8ff';
-    });
-    
-    uploadArea.addEventListener('dragleave', (e) => {
-        e.preventDefault();
-        uploadArea.style.borderColor = '#dee2e6';
-        uploadArea.style.backgroundColor = '#f8f9fa';
-    });
-    
-    uploadArea.addEventListener('drop', (e) => {
-        e.preventDefault();
-        uploadArea.style.borderColor = '#dee2e6';
-        uploadArea.style.backgroundColor = '#f8f9fa';
-        
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-            fileInput.files = files;
-            handleFileSelect({ target: { files: files } });
-        }
-    });
 });
 </script>
 
 <style>
-/* Mobile-optimized upload styling */
-.upload-area:hover {
-    border-color: #007bff !important;
-    background-color: #f0f8ff !important;
+/* Mobile-optimized file input styling */
+.form-control[type="file"] {
+    padding: 0.5rem;
 }
 
 @media (max-width: 768px) {
-    .upload-area {
-        padding: 1.5rem 1rem !important;
-    }
-    
-    .upload-area h5 {
-        font-size: 1.1rem;
-    }
-    
-    .upload-area p {
-        font-size: 0.9rem;
-    }
-    
-    .upload-area .btn {
-        font-size: 0.9rem;
-        padding: 0.5rem 1rem;
+    .upload-help small {
+        font-size: 0.8rem;
     }
 }
 </style>

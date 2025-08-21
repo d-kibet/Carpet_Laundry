@@ -80,39 +80,25 @@ class ExpenseController extends Controller
 
         $category = ExpenseCategory::findOrFail($validated['category_id']);
 
-        // Handle receipt upload with enhanced security
-        $receiptPath = null;
-        if ($request->hasFile('receipt_image')) {
-            $file = $request->file('receipt_image');
-            
-            // Enhanced security validation
-            if ($file->isValid()) {
-                // Additional security checks
-                $allowedMimes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
-                if (!in_array($file->getMimeType(), $allowedMimes)) {
-                    return redirect()->back()->withErrors(['receipt_image' => 'Invalid file type. Only JPEG, PNG, and WebP images are allowed.']);
-                }
-                
-                // Generate secure filename with proper extension
-                $extension = $file->getClientOriginalExtension();
-                $fileName = 'receipt_' . time() . '_' . bin2hex(random_bytes(8)) . '.' . strtolower($extension);
-                
-                // Store with custom name
-                $receiptPath = $file->storeAs('receipts', $fileName, 'public');
-            }
-        }
-
         // Determine approval status
         $approvalStatus = 'Approved';
         if ($category->requires_approval && $validated['amount'] > 5000) {
             $approvalStatus = 'Pending';
         }
 
+        // Remove receipt_image from validated data since we handle it separately
+        unset($validated['receipt_image']);
+
         $expense = Expense::create(array_merge($validated, [
-            'receipt_image' => $receiptPath,
             'approval_status' => $approvalStatus,
             'created_by' => Auth::id(),
         ]));
+
+        // Handle receipt upload with Spatie Media Library
+        if ($request->hasFile('receipt_image')) {
+            $expense->addMediaFromRequest('receipt_image')
+                ->toMediaCollection('receipts');
+        }
 
         $message = $approvalStatus === 'Pending' 
                  ? 'Expense recorded and sent for approval' 
@@ -156,33 +142,18 @@ class ExpenseController extends Controller
             'notes' => 'nullable|string|max:500',
         ]);
 
-        // Handle receipt upload with enhanced security
-        if ($request->hasFile('receipt_image')) {
-            $file = $request->file('receipt_image');
-            
-            // Enhanced security validation
-            if ($file->isValid()) {
-                // Additional security checks
-                $allowedMimes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
-                if (!in_array($file->getMimeType(), $allowedMimes)) {
-                    return redirect()->back()->withErrors(['receipt_image' => 'Invalid file type. Only JPEG, PNG, and WebP images are allowed.']);
-                }
-                
-                // Delete old receipt if exists
-                if ($expense->receipt_image && Storage::disk('public')->exists($expense->receipt_image)) {
-                    Storage::disk('public')->delete($expense->receipt_image);
-                }
-                
-                // Generate secure filename with proper extension
-                $extension = $file->getClientOriginalExtension();
-                $fileName = 'receipt_' . time() . '_' . bin2hex(random_bytes(8)) . '.' . strtolower($extension);
-                
-                // Store with custom name
-                $validated['receipt_image'] = $file->storeAs('receipts', $fileName, 'public');
-            }
-        }
+        // Remove receipt_image from validated data since we handle it separately
+        unset($validated['receipt_image']);
 
         $expense->update($validated);
+
+        // Handle receipt upload with Spatie Media Library
+        if ($request->hasFile('receipt_image')) {
+            // Clear existing media and add new one
+            $expense->clearMediaCollection('receipts');
+            $expense->addMediaFromRequest('receipt_image')
+                ->toMediaCollection('receipts');
+        }
 
         return redirect()->route('expenses.index')->with([
             'message' => 'Expense updated successfully',
@@ -192,8 +163,11 @@ class ExpenseController extends Controller
 
     public function destroy(Expense $expense)
     {
-        // Delete receipt file if exists
-        if ($expense->receipt_image) {
+        // Clear all media (this will automatically delete files)
+        $expense->clearMediaCollection('receipts');
+        
+        // Delete old receipt file if it exists (for backward compatibility)
+        if ($expense->receipt_image && Storage::disk('public')->exists($expense->receipt_image)) {
             Storage::disk('public')->delete($expense->receipt_image);
         }
 
@@ -207,23 +181,28 @@ class ExpenseController extends Controller
 
     public function serveReceipt(Expense $expense)
     {
-        // Check if user has permission to view expense
-        if (!$expense->receipt_image) {
-            abort(404, 'Receipt not found');
-        }
-
-        // Check if file exists
-        if (!Storage::disk('public')->exists($expense->receipt_image)) {
-            abort(404, 'Receipt file not found');
-        }
-
-        // Get file path and info
-        $filePath = Storage::disk('public')->path($expense->receipt_image);
-        $mimeType = Storage::disk('public')->mimeType($expense->receipt_image);
+        $media = $expense->getFirstMedia('receipts');
         
-        // Serve file with proper headers
-        return response()->file($filePath, [
-            'Content-Type' => $mimeType,
+        if (!$media) {
+            // Fallback for old receipt_image column (backward compatibility)
+            if (!$expense->receipt_image || !Storage::disk('public')->exists($expense->receipt_image)) {
+                abort(404, 'Receipt not found');
+            }
+            
+            // Serve old-style receipt
+            $filePath = Storage::disk('public')->path($expense->receipt_image);
+            $mimeType = Storage::disk('public')->mimeType($expense->receipt_image);
+            
+            return response()->file($filePath, [
+                'Content-Type' => $mimeType,
+                'Cache-Control' => 'public, max-age=31536000',
+                'Expires' => gmdate('D, d M Y H:i:s \G\M\T', time() + 31536000),
+            ]);
+        }
+
+        // Serve media library file
+        return response()->file($media->getPath(), [
+            'Content-Type' => $media->mime_type,
             'Cache-Control' => 'public, max-age=31536000',
             'Expires' => gmdate('D, d M Y H:i:s \G\M\T', time() + 31536000),
         ]);
