@@ -66,6 +66,14 @@ class ExpenseController extends Controller
 
     public function store(Request $request)
     {
+        // Debug logging
+        \Log::info('Expense store request received', [
+            'user_id' => Auth::id(),
+            'user_email' => Auth::user()->email ?? 'no email',
+            'has_file' => $request->hasFile('receipt_image'),
+            'request_data' => $request->except(['_token', 'receipt_image']),
+        ]);
+
         $validated = $request->validate([
             'category_id' => 'required|exists:expense_categories,id',
             'vendor_name' => 'required|string|max:200',

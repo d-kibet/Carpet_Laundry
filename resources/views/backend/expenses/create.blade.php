@@ -228,9 +228,12 @@
                                         <button type="button" class="btn btn-outline-primary mb-2" id="galleryBtn">
                                             <i class="fas fa-images me-1"></i>Choose from Gallery
                                         </button>
-                                        <!-- Debug Button (temporary) -->
+                                        <!-- Debug Buttons (temporary) -->
                                         <button type="button" class="btn btn-outline-info mb-2 ms-2" id="debugBtn">
                                             <i class="fas fa-bug me-1"></i>Test Upload
+                                        </button>
+                                        <button type="button" class="btn btn-outline-warning mb-2 ms-1" id="testPostBtn">
+                                            <i class="fas fa-flask me-1"></i>Test POST
                                         </button>
                                     </div>
 
@@ -557,6 +560,33 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             console.error('Debug upload error:', error);
             alert('Debug upload failed: ' + error.message);
+        });
+    });
+    
+    // Test POST button (temporary)
+    document.getElementById('testPostBtn').addEventListener('click', function() {
+        fetch('/expenses/test-post', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({
+                test: 'data'
+            })
+        })
+        .then(response => {
+            console.log('POST test response status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('POST test response data:', data);
+            alert('POST test successful! Check console for details.');
+        })
+        .catch(error => {
+            console.error('POST test error:', error);
+            alert('POST test failed: ' + error.message);
         });
     });
 });

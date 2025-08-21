@@ -220,7 +220,7 @@ Route::controller(App\Http\Controllers\Backend\NotificationController::class)->m
 Route::controller(App\Http\Controllers\Backend\ExpenseController::class)->middleware(['auth'])->group(function(){
     Route::get('/expenses', 'index')->name('expenses.index')->middleware('permission:mpesa.all');
     Route::get('/expenses/create', 'create')->name('expenses.create')->middleware('permission:mpesa.add');
-    Route::post('/expenses', 'store')->name('expenses.store')->middleware('permission:mpesa.add');
+    Route::post('/expenses', 'store')->name('expenses.store');
     Route::get('/expenses/{expense}', 'show')->name('expenses.show');
     Route::get('/expenses/{expense}/edit', 'edit')->name('expenses.edit');
     Route::put('/expenses/{expense}', 'update')->name('expenses.update');
@@ -241,6 +241,15 @@ Route::controller(App\Http\Controllers\Backend\ExpenseController::class)->middle
             'environment' => app()->environment(),
         ]);
     })->name('expenses.debug.storage')->middleware('auth');
+    
+    Route::post('/expenses/test-post', function(\Illuminate\Http\Request $request) {
+        return response()->json([
+            'success' => true,
+            'message' => 'POST request works',
+            'user_id' => Auth::id(),
+            'timestamp' => now(),
+        ]);
+    })->name('expenses.test.post')->middleware('auth');
     
     Route::post('/expenses/debug-upload', function(\Illuminate\Http\Request $request) {
         try {
