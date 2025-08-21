@@ -217,14 +217,39 @@
                                     <label for="receipt_image" class="form-label">
                                         <i class="fas fa-camera me-1"></i>Receipt Photo
                                     </label>
-                                    <input type="file" 
-                                           name="receipt_image" 
-                                           id="receipt_image" 
-                                           class="filepond" 
-                                           accept="image/*">
-                                    <div class="form-text">
+                                    
+                                    <!-- Mobile-Friendly Upload Area -->
+                                    <div class="upload-container">
+                                        <div class="upload-area" id="uploadArea" style="border: 2px dashed #dee2e6; border-radius: 12px; padding: 2rem; text-align: center; background: #f8f9fa; transition: all 0.3s ease; cursor: pointer;">
+                                            <div class="upload-content" id="uploadContent">
+                                                <i class="fas fa-camera fa-3x text-primary mb-3"></i>
+                                                <h5 class="mb-2">Take Photo or Upload</h5>
+                                                <p class="text-muted mb-3">Tap to take a photo with your camera or choose from gallery</p>
+                                                <button type="button" class="btn btn-primary" id="uploadBtn">
+                                                    <i class="fas fa-camera me-2"></i>Choose Photo
+                                                </button>
+                                            </div>
+                                            <div class="upload-preview d-none" id="uploadPreview">
+                                                <img id="previewImage" src="" alt="Preview" class="img-thumbnail mb-2" style="max-height: 200px;">
+                                                <div class="upload-info">
+                                                    <p id="fileName" class="text-muted mb-2"></p>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" id="removeBtn">
+                                                        <i class="fas fa-times"></i> Remove
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <input type="file" 
+                                               name="receipt_image" 
+                                               id="receipt_image" 
+                                               accept="image/*"
+                                               capture="environment"
+                                               style="display: none;">
+                                    </div>
+                                    
+                                    <div class="form-text mt-2">
                                         <i class="fas fa-info-circle me-1"></i>
-                                        Take a photo or drag & drop • Max 2MB • JPEG, PNG, WebP
+                                        Take a photo or drag & drop • Max 5MB • JPEG, PNG, WebP
                                     </div>
                                     @error('receipt_image')
                                         <div class="alert alert-danger mt-2">
@@ -364,136 +389,114 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize character count
     descriptionCount.textContent = descriptionTextarea.value.length;
-});
-
-// Initialize Filepond for seamless image uploads
-FilePond.registerPlugin(
-    FilePondPluginImagePreview,
-    FilePondPluginImageCrop,
-    FilePondPluginImageResize,
-    FilePondPluginImageTransform,
-    FilePondPluginFileValidateType,
-    FilePondPluginFileValidateSize
-);
-
-// Configure Filepond
-const receiptInput = document.querySelector('#receipt_image');
-if (receiptInput) {
-    const pond = FilePond.create(receiptInput, {
-        labelIdle: `
-            <div class="filepond-drop-area">
-                <i class="fas fa-camera fa-3x text-primary mb-2"></i>
-                <h5>Take Photo or Drop Image</h5>
-                <p class="text-muted">Tap to take a photo with your camera<br>or drag & drop an image file</p>
-            </div>
-        `,
-        acceptedFileTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'],
-        maxFileSize: '2MB',
-        maxFiles: 1,
-        allowMultiple: false,
-        allowImagePreview: true,
-        allowImageCrop: true,
-        allowImageResize: true,
-        allowImageTransform: true,
-        imageCropAspectRatio: null,
-        imageResizeTargetWidth: 1200,
-        imageResizeTargetHeight: 1200,
-        imageResizeMode: 'cover',
-        imageResizeUpscale: false,
-        credits: false,
-        instantUpload: false,
-        
-        // Custom styling
-        stylePanelLayout: 'compact circle',
-        styleLoadIndicatorPosition: 'center bottom',
-        styleProgressIndicatorPosition: 'right bottom',
-        styleButtonRemoveItemPosition: 'left bottom',
-        
-        // Event handlers
-        onaddfile: (error, file) => {
-            if (!error) {
-                console.log('File added:', file.filename);
-            }
-        },
-        
-        onerror: (error) => {
-            console.error('FilePond error:', error);
-            // Show user-friendly error message
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'alert alert-danger mt-2';
-            errorDiv.innerHTML = `
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                Upload failed: ${error.main || 'Please try again'}
-            `;
-            receiptInput.parentNode.appendChild(errorDiv);
+    
+    // Simple Upload Handler
+    const uploadArea = document.getElementById('uploadArea');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const uploadContent = document.getElementById('uploadContent');
+    const uploadPreview = document.getElementById('uploadPreview');
+    const previewImage = document.getElementById('previewImage');
+    const fileName = document.getElementById('fileName');
+    const removeBtn = document.getElementById('removeBtn');
+    const fileInput = document.getElementById('receipt_image');
+    
+    // File input change handler
+    function handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (file) {
+            // Validate file
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+            const maxSize = 5 * 1024 * 1024; // 5MB
             
-            // Remove error after 5 seconds
-            setTimeout(() => errorDiv.remove(), 5000);
+            if (!allowedTypes.includes(file.type)) {
+                alert('Please select a valid image file (JPEG, PNG, WebP)');
+                return;
+            }
+            
+            if (file.size > maxSize) {
+                alert('File size must be less than 5MB');
+                return;
+            }
+            
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImage.src = e.target.result;
+                fileName.textContent = file.name + ' (' + (file.size / 1024 / 1024).toFixed(2) + ' MB)';
+                uploadContent.classList.add('d-none');
+                uploadPreview.classList.remove('d-none');
+                uploadArea.style.borderColor = '#28a745';
+                uploadArea.style.backgroundColor = '#f8fff9';
+            };
+            reader.readAsDataURL(file);
         }
-    });
-}
-</script>
-
-<!-- Filepond CSS -->
-<link href="https://unpkg.com/filepond@^4/dist/filepond.css" rel="stylesheet">
-<link href="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css" rel="stylesheet">
-
-<!-- Filepond JavaScript -->
-<script src="https://unpkg.com/filepond@^4/dist/filepond.js"></script>
-<script src="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.js"></script>
-<script src="https://unpkg.com/filepond-plugin-image-crop/dist/filepond-plugin-image-crop.js"></script>
-<script src="https://unpkg.com/filepond-plugin-image-resize/dist/filepond-plugin-image-resize.js"></script>
-<script src="https://unpkg.com/filepond-plugin-image-transform/dist/filepond-plugin-image-transform.js"></script>
-<script src="https://unpkg.com/filepond-plugin-file-validate-type/dist/filepond-plugin-file-validate-type.js"></script>
-<script src="https://unpkg.com/filepond-plugin-file-validate-size/dist/filepond-plugin-file-validate-size.js"></script>
-
-<style>
-/* Custom Filepond Styling */
-.filepond--root {
-    margin-bottom: 1rem;
-}
-
-.filepond--drop-label {
-    color: #6c757d;
-    background-color: #f8f9fa;
-    border: 2px dashed #dee2e6;
-    border-radius: 12px;
-    padding: 2rem;
-    text-align: center;
-    transition: all 0.3s ease;
-}
-
-.filepond--drop-label:hover {
-    background-color: #e9ecef;
-    border-color: #007bff;
-    color: #007bff;
-}
-
-.filepond-drop-area {
-    padding: 1rem;
-}
-
-.filepond--panel-root {
-    border-radius: 12px;
-    background-color: transparent;
-}
-
-.filepond--image-preview-wrapper {
-    border-radius: 8px;
-}
-
-/* Mobile optimizations */
-@media (max-width: 768px) {
-    .filepond--drop-label {
-        padding: 1.5rem 1rem;
     }
     
-    .filepond-drop-area h5 {
+    // Remove file handler
+    function removeFile() {
+        fileInput.value = '';
+        uploadContent.classList.remove('d-none');
+        uploadPreview.classList.add('d-none');
+        uploadArea.style.borderColor = '#dee2e6';
+        uploadArea.style.backgroundColor = '#f8f9fa';
+    }
+    
+    // Event listeners
+    uploadBtn.addEventListener('click', () => fileInput.click());
+    uploadArea.addEventListener('click', () => fileInput.click());
+    removeBtn.addEventListener('click', removeFile);
+    fileInput.addEventListener('change', handleFileSelect);
+    
+    // Drag and drop handlers
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.style.borderColor = '#007bff';
+        uploadArea.style.backgroundColor = '#f0f8ff';
+    });
+    
+    uploadArea.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        uploadArea.style.borderColor = '#dee2e6';
+        uploadArea.style.backgroundColor = '#f8f9fa';
+    });
+    
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.style.borderColor = '#dee2e6';
+        uploadArea.style.backgroundColor = '#f8f9fa';
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            handleFileSelect({ target: { files: files } });
+        }
+    });
+});
+</script>
+
+<style>
+/* Mobile-optimized upload styling */
+.upload-area:hover {
+    border-color: #007bff !important;
+    background-color: #f0f8ff !important;
+}
+
+@media (max-width: 768px) {
+    .upload-area {
+        padding: 1.5rem 1rem !important;
+    }
+    
+    .upload-area h5 {
         font-size: 1.1rem;
     }
     
-    .filepond-drop-area p {
+    .upload-area p {
         font-size: 0.9rem;
+    }
+    
+    .upload-area .btn {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
     }
 }
 </style>

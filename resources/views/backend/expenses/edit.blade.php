@@ -201,7 +201,7 @@
                                            accept="image/*">
                                     <div class="form-text">
                                         <i class="fas fa-info-circle me-1"></i>
-                                        {{ $expense->receipt_image ? 'Take new photo to replace current receipt' : 'Take a photo or drag & drop' }} • Max 2MB • JPEG, PNG, WebP
+                                        {{ $expense->receipt_image ? 'Take new photo to replace current receipt' : 'Take a photo or drag & drop' }} • Max 5MB • JPEG, PNG, WebP
                                     </div>
                                     @error('receipt_image')
                                         <div class="alert alert-danger mt-2">
