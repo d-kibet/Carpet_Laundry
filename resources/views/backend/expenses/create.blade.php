@@ -214,7 +214,7 @@
 
                                 <!-- Receipt Upload -->
                                 <div class="col-md-6">
-                                    <label for="receipt_image" class="form-label">
+                                    <label for="galleryInput" class="form-label">
                                         <i class="fas fa-camera me-1"></i>Receipt Photo
                                     </label>
                                     
@@ -236,7 +236,8 @@
 
                                     <!-- Hidden File Inputs -->
                                     <input type="file" 
-                                           id="cameraInput" 
+                                           id="cameraInput"
+                                           name="camera_temp"
                                            accept="image/*" 
                                            capture="environment" 
                                            style="display: none;">
@@ -429,51 +430,79 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Handle file selection from either camera or gallery
     function handleFileSelect(file, source) {
-        if (!file) return;
+        if (!file) {
+            console.error('No file provided to handleFileSelect');
+            return;
+        }
+        
+        console.log('File selected:', {
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            source: source
+        });
         
         // Validate file type
         const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
         if (!allowedTypes.includes(file.type)) {
-            alert('Please select a valid image file (JPEG, PNG, WebP)');
+            alert('Please select a valid image file (JPEG, PNG, WebP). Selected type: ' + file.type);
             return;
         }
         
         // Validate file size (5MB)
         const maxSize = 5 * 1024 * 1024;
         if (file.size > maxSize) {
-            alert('File size must be less than 5MB');
+            alert('File size must be less than 5MB. Selected size: ' + (file.size / 1024 / 1024).toFixed(2) + ' MB');
             return;
         }
         
         // Copy file to the form input that will be submitted
         if (source === 'camera') {
-            // Transfer file from camera input to gallery input for form submission
-            const dt = new DataTransfer();
-            dt.items.add(file);
-            galleryInput.files = dt.files;
+            try {
+                // Transfer file from camera input to gallery input for form submission
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                galleryInput.files = dt.files;
+                console.log('File transferred from camera to gallery input successfully');
+            } catch (error) {
+                console.error('Failed to transfer file from camera to gallery:', error);
+                alert('Image failed to upload: ' + error.message);
+                return;
+            }
         }
         
         // Show preview
         const reader = new FileReader();
         reader.onload = function(e) {
             imagePreview.src = e.target.result;
-            fileName.textContent = file.name + ' (' + (file.size / 1024 / 1024).toFixed(2) + ' MB)';
+            fileName.textContent = file.name + ' (' + (file.size / 1024 / 1024).toFixed(2) + ' MB) - ' + source;
             previewArea.classList.remove('d-none');
+            console.log('Preview loaded successfully');
+        };
+        reader.onerror = function(error) {
+            console.error('FileReader error:', error);
+            alert('Image failed to upload: Could not read file');
         };
         reader.readAsDataURL(file);
     }
     
     // Camera input change
     cameraInput.addEventListener('change', function(e) {
+        console.log('Camera input changed, files count:', e.target.files.length);
         if (e.target.files.length > 0) {
             handleFileSelect(e.target.files[0], 'camera');
+        } else {
+            console.warn('No files selected from camera');
         }
     });
     
     // Gallery input change
     galleryInput.addEventListener('change', function(e) {
+        console.log('Gallery input changed, files count:', e.target.files.length);
         if (e.target.files.length > 0) {
             handleFileSelect(e.target.files[0], 'gallery');
+        } else {
+            console.warn('No files selected from gallery');
         }
     });
     
