@@ -92,7 +92,7 @@
                     <tr>
                         <th>Unique ID</th>
                         <th>Phone</th>
-                        <th>Price</th>
+                        <th>Amount</th>
                         <th>Payment Status</th>
                         <th>Date Received</th>
                     </tr>
@@ -102,7 +102,7 @@
                         <tr>
                             <td>{{ $record->unique_id }}</td>
                             <td>{{ $record->phone }}</td>
-                            <td>{{ $record->price }}</td>
+                            <td>KES {{ number_format($record->total, 2) }}</td>
                             <td>{{ $record->payment_status }}</td>
                             <td>{{ $record->date_received }}</td>
                         </tr>
@@ -123,7 +123,7 @@
                     <tr>
                         <th>Unique ID</th>
                         <th>Phone</th>
-                        <th>Price</th>
+                        <th>Amount</th>
                         <th>Payment Status</th>
                         <th>Date Received</th>
                     </tr>
@@ -133,7 +133,7 @@
                         <tr>
                             <td>{{ $record->unique_id }}</td>
                             <td>{{ $record->phone }}</td>
-                            <td>{{ $record->price }}</td>
+                            <td>KES {{ number_format($record->total, 2) }}</td>
                             <td>{{ $record->payment_status }}</td>
                             <td>{{ $record->date_received }}</td>
                         </tr>

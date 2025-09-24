@@ -151,9 +151,11 @@ public function viewLaundryByMonth(Request $request)
         $paidLaundry   = $laundryRecords->where('payment_status', 'Paid');
         $unpaidLaundry = $laundryRecords->where('payment_status', 'Not Paid');
         $totalPaid = $paidLaundry->sum(function($item) {
-            return (float) $item->price;
+            return is_numeric($item->total) ? (float) $item->total : 0;
         });
-        $totalUnpaid   = $unpaidLaundry->sum('price');
+        $totalUnpaid = $unpaidLaundry->sum(function($item) {
+            return is_numeric($item->total) ? (float) $item->total : 0;
+        });
         $grandTotal    = $totalPaid + $totalUnpaid;
 
         $newLaundry = $laundryRecords->filter(function ($record) use ($startDate) {
@@ -188,9 +190,11 @@ public function viewLaundryByMonth(Request $request)
         $paidLaundry   = $laundryRecords->where('payment_status', 'Paid');
         $unpaidLaundry = $laundryRecords->where('payment_status', 'Not Paid');
         $totalPaid = $paidLaundry->sum(function($item) {
-            return (float) $item->price;
+            return is_numeric($item->total) ? (float) $item->total : 0;
         });
-        $totalUnpaid   = $unpaidLaundry->sum('price');
+        $totalUnpaid = $unpaidLaundry->sum(function($item) {
+            return is_numeric($item->total) ? (float) $item->total : 0;
+        });
         $grandTotal    = $totalPaid + $totalUnpaid;
 
         $filename = "laundry_{$year}_{$month}.csv";

@@ -43,22 +43,23 @@ class ReportController extends Controller
     $date = $request->input('date', \Carbon\Carbon::today()->toDateString());
     $selectedDate = \Carbon\Carbon::parse($date)->toDateString();
 
-    // Retrieve paid laundry records (assuming records with total > 0 are considered paid).
+    // Retrieve paid laundry records using payment_status field
     $paidLaundry = Laundry::whereDate('date_received', $selectedDate)
-        ->where('total', '>', 0)
+        ->where('payment_status', 'Paid')
         ->get();
 
-    // Retrieve unpaid laundry records (where total is 0 or NULL).
+    // Retrieve unpaid laundry records using payment_status field
     $unpaidLaundry = Laundry::whereDate('date_received', $selectedDate)
-        ->where(function ($query) {
-            $query->where('total', '=', 0)
-                  ->orWhereNull('total');
-        })
+        ->where('payment_status', 'Not Paid')
         ->get();
 
     // Calculate totals.
-    $totalLaundryPaid = $paidLaundry->sum('total');
-    $totalLaundryUnpaid = $unpaidLaundry->sum('price');
+    $totalLaundryPaid = $paidLaundry->sum(function($item) {
+        return is_numeric($item->total) ? (float) $item->total : 0;
+    });
+    $totalLaundryUnpaid = $unpaidLaundry->sum(function($item) {
+        return is_numeric($item->total) ? (float) $item->total : 0;
+    });
     $grandTotal = $totalLaundryPaid + $totalLaundryUnpaid;
 
     return view('reports.laundry_today', compact(

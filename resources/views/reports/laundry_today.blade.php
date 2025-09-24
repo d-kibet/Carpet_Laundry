@@ -35,8 +35,7 @@
                     <tr>
                         <th>Name</th>
                         <th>Phone</th>
-                        <th>Price</th>
-                        <th>Total Paid</th>
+                        <th>Amount Paid</th>
                         <th>Date Received</th>
                     </tr>
                 </thead>
@@ -45,13 +44,12 @@
                     <tr>
                         <td>{{ $laundry->name }}</td>
                         <td>{{ $laundry->phone }}</td>
-                        <td>{{ $laundry->price }}</td>
-                        <td>{{ $laundry->total }}</td>
+                        <td>KES {{ number_format($laundry->total, 2) }}</td>
                         <td>{{ $laundry->date_received }}</td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="5">No paid laundry records found for the selected date.</td>
+                        <td colspan="4">No paid laundry records found for the selected date.</td>
                     </tr>
                     @endforelse
                 </tbody>
@@ -66,7 +64,7 @@
                     <tr>
                         <th>Name</th>
                         <th>Phone</th>
-                        <th>Price</th>
+                        <th>Amount Due</th>
                         <th>Date Received</th>
                     </tr>
                 </thead>
@@ -75,7 +73,7 @@
                     <tr>
                         <td>{{ $laundry->name }}</td>
                         <td>{{ $laundry->phone }}</td>
-                        <td>{{ $laundry->price }}</td>
+                        <td>KES {{ number_format($laundry->total, 2) }}</td>
                         <td>{{ $laundry->date_received }}</td>
                     </tr>
                     @empty
