@@ -54,20 +54,42 @@ class NotificationController extends Controller
 
     public function unread()
     {
-        $user = $this->getAuthenticatedUser();
-        $notifications = $user->unreadNotifications;
-        return response()->json([
-            'count' => $notifications->count(),
-            'notifications' => $notifications->take(10)->map(function($notification) {
-                return [
-                    'id' => $notification->id,
-                    'type' => $notification->type,
-                    'data' => $notification->data,
-                    'created_at' => $notification->created_at->diffForHumans(),
-                    'message' => $notification->data['message'] ?? 'New notification',
-                ];
-            })
-        ]);
+        try {
+            $user = $this->getAuthenticatedUser();
+
+            // Get count efficiently without loading all records
+            $count = $user->unreadNotifications()->count();
+
+            // Only load the top 10 notifications we need
+            $notifications = $user->unreadNotifications()
+                ->latest()
+                ->limit(10)
+                ->get();
+
+            return response()->json([
+                'count' => $count,
+                'notifications' => $notifications->map(function($notification) {
+                    return [
+                        'id' => $notification->id,
+                        'type' => $notification->type,
+                        'data' => $notification->data,
+                        'created_at' => $notification->created_at->diffForHumans(),
+                        'message' => $notification->data['message'] ?? 'New notification',
+                    ];
+                })
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error loading notifications: ' . $e->getMessage(), [
+                'user_id' => auth()->id(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'count' => 0,
+                'notifications' => [],
+                'error' => 'Failed to load notifications'
+            ], 500);
+        }
     }
 
     public function markAsRead($id)
