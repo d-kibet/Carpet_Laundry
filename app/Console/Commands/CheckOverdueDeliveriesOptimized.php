@@ -16,11 +16,12 @@ class CheckOverdueDeliveriesOptimized extends Command
     /**
      * The name and signature of the console command.
      */
-    protected $signature = 'deliveries:check-overdue-optimized 
+    protected $signature = 'deliveries:check-overdue-optimized
                             {--days=3 : Number of days after received date to consider overdue}
                             {--notify-after=1 : Days overdue before sending notification}
                             {--batch-size=100 : Number of records to process per batch}
-                            {--max-notifications=500 : Maximum notifications to send per run}';
+                            {--max-notifications=500 : Maximum notifications to send per run}
+                            {--notification-interval=5 : Days between repeated notifications for same item}';
 
     /**
      * The console command description.
@@ -36,9 +37,10 @@ class CheckOverdueDeliveriesOptimized extends Command
         $notifyAfterDays = (int) $this->option('notify-after');
         $batchSize = (int) $this->option('batch-size');
         $maxNotifications = (int) $this->option('max-notifications');
-        
+        $notificationInterval = (int) $this->option('notification-interval');
+
         $this->info("Starting optimized overdue delivery check...");
-        $this->info("Config: Grace={$gracePeriodDays}d, NotifyAfter={$notifyAfterDays}d, BatchSize={$batchSize}, MaxNotifications={$maxNotifications}");
+        $this->info("Config: Grace={$gracePeriodDays}d, NotifyAfter={$notifyAfterDays}d, NotifyInterval={$notificationInterval}d, BatchSize={$batchSize}, MaxNotifications={$maxNotifications}");
 
         $cutoffDate = Carbon::now()->subDays($gracePeriodDays + $notifyAfterDays);
         $notificationsSent = 0;
@@ -52,10 +54,10 @@ class CheckOverdueDeliveriesOptimized extends Command
         }
 
         // Process carpets in batches
-        $carpetStats = $this->processCarpetsInBatches($cutoffDate, $gracePeriodDays, $adminUsers, $batchSize, $maxNotifications, $notificationsSent);
-        
+        $carpetStats = $this->processCarpetsInBatches($cutoffDate, $gracePeriodDays, $adminUsers, $batchSize, $maxNotifications, $notificationInterval, $notificationsSent);
+
         // Process laundry in batches (if we haven't hit the max)
-        $laundryStats = $this->processLaundryInBatches($cutoffDate, $gracePeriodDays, $adminUsers, $batchSize, $maxNotifications, $notificationsSent);
+        $laundryStats = $this->processLaundryInBatches($cutoffDate, $gracePeriodDays, $adminUsers, $batchSize, $maxNotifications, $notificationInterval, $notificationsSent);
 
         $endTime = microtime(true);
         $duration = round($endTime - $startTime, 2);
@@ -82,20 +84,20 @@ class CheckOverdueDeliveriesOptimized extends Command
         ]);
     }
 
-    private function processCarpetsInBatches($cutoffDate, $gracePeriodDays, $adminUsers, $batchSize, $maxNotifications, &$notificationsSent)
+    private function processCarpetsInBatches($cutoffDate, $gracePeriodDays, $adminUsers, $batchSize, $maxNotifications, $notificationInterval, &$notificationsSent)
     {
-        $stats = ['processed' => 0, 'overdue' => 0, 'notifications' => 0];
+        $stats = ['processed' => 0, 'overdue' => 0, 'notifications' => 0, 'skipped' => 0];
         $shouldStop = false;
-        
+
         $this->info("Processing carpets...");
-        
+
         // Use efficient chunking with indexed query
-        Carpet::select(['id', 'uniqueid', 'phone', 'location', 'date_received'])
+        Carpet::select(['id', 'uniqueid', 'phone', 'location', 'date_received', 'last_overdue_notification_at'])
             ->where('delivered', 'Not Delivered')
             ->whereNotNull('date_received')
             ->whereDate('date_received', '<=', $cutoffDate)
             ->orderBy('date_received') // Most overdue first
-            ->chunk($batchSize, function ($carpets) use ($gracePeriodDays, $adminUsers, $maxNotifications, &$notificationsSent, &$stats, &$shouldStop) {
+            ->chunk($batchSize, function ($carpets) use ($gracePeriodDays, $adminUsers, $maxNotifications, $notificationInterval, &$notificationsSent, &$stats, &$shouldStop) {
                 
                 $batchNotifications = 0;
                 $overdueCarpetIds = [];
@@ -110,24 +112,29 @@ class CheckOverdueDeliveriesOptimized extends Command
                     }
                     
                     $daysOverdue = $this->calculateOverdueDays($carpet->date_received, $gracePeriodDays);
-                    
+
                     if ($daysOverdue > 0) {
                         $stats['overdue']++;
-                        
-                        // Check if we should send notification (not sent today)
-                        if ($this->shouldSendNotification($carpet->id, 'carpet')) {
+
+                        // Check if we should send notification based on interval
+                        if ($this->shouldSendNotificationByInterval($carpet->last_overdue_notification_at, $notificationInterval)) {
                             $overdueCarpetIds[] = $carpet->id;
-                            
+
                             // Send to all admin users
                             foreach ($adminUsers as $admin) {
                                 $admin->notify(new OverdueDeliveryNotification($carpet, $daysOverdue));
                             }
-                            
+
+                            // Update the carpet record with notification timestamp
+                            $carpet->update(['last_overdue_notification_at' => now()]);
+
                             $batchNotifications++;
                             $notificationsSent++;
                             $stats['notifications']++;
-                            
+
                             $this->line("  Carpet {$carpet->uniqueid} - {$daysOverdue} days overdue");
+                        } else {
+                            $stats['skipped']++;
                         }
                     }
                 }
@@ -154,24 +161,24 @@ class CheckOverdueDeliveriesOptimized extends Command
         return $stats;
     }
 
-    private function processLaundryInBatches($cutoffDate, $gracePeriodDays, $adminUsers, $batchSize, $maxNotifications, &$notificationsSent)
+    private function processLaundryInBatches($cutoffDate, $gracePeriodDays, $adminUsers, $batchSize, $maxNotifications, $notificationInterval, &$notificationsSent)
     {
-        $stats = ['processed' => 0, 'overdue' => 0, 'notifications' => 0];
+        $stats = ['processed' => 0, 'overdue' => 0, 'notifications' => 0, 'skipped' => 0];
         $shouldStop = false;
-        
+
         if ($notificationsSent >= $maxNotifications) {
             $this->warn("Skipping laundry processing - notification limit reached");
             return $stats;
         }
-        
+
         $this->info("Processing laundry...");
-        
-        Laundry::select(['id', 'unique_id', 'phone', 'location', 'date_received'])
+
+        Laundry::select(['id', 'unique_id', 'phone', 'location', 'date_received', 'last_overdue_notification_at'])
             ->where('delivered', 'Not Delivered')
             ->whereNotNull('date_received')
             ->whereDate('date_received', '<=', $cutoffDate)
             ->orderBy('date_received')
-            ->chunk($batchSize, function ($laundryItems) use ($gracePeriodDays, $adminUsers, $maxNotifications, &$notificationsSent, &$stats, &$shouldStop) {
+            ->chunk($batchSize, function ($laundryItems) use ($gracePeriodDays, $adminUsers, $maxNotifications, $notificationInterval, &$notificationsSent, &$stats, &$shouldStop) {
                 
                 $batchNotifications = 0;
                 $overdueLaundryIds = [];
@@ -186,22 +193,27 @@ class CheckOverdueDeliveriesOptimized extends Command
                     }
                     
                     $daysOverdue = $this->calculateOverdueDays($laundry->date_received, $gracePeriodDays);
-                    
+
                     if ($daysOverdue > 0) {
                         $stats['overdue']++;
-                        
-                        if ($this->shouldSendNotification($laundry->id, 'laundry')) {
+
+                        if ($this->shouldSendNotificationByInterval($laundry->last_overdue_notification_at, $notificationInterval)) {
                             $overdueLaundryIds[] = $laundry->id;
-                            
+
                             foreach ($adminUsers as $admin) {
                                 $admin->notify(new OverdueDeliveryNotification($laundry, $daysOverdue));
                             }
-                            
+
+                            // Update the laundry record with notification timestamp
+                            $laundry->update(['last_overdue_notification_at' => now()]);
+
                             $batchNotifications++;
                             $notificationsSent++;
                             $stats['notifications']++;
-                            
+
                             $this->line("  Laundry {$laundry->unique_id} - {$daysOverdue} days overdue");
+                        } else {
+                            $stats['skipped']++;
                         }
                     }
                 }
@@ -241,15 +253,17 @@ class CheckOverdueDeliveriesOptimized extends Command
         return max(0, Carbon::now()->diffInDays($expectedDeliveryDate, false) * -1);
     }
 
-    private function shouldSendNotification($itemId, $type)
+    private function shouldSendNotificationByInterval($lastNotificationAt, $intervalDays)
     {
-        // Optimized query with specific columns and today's date
-        return !DB::table('notifications')
-            ->where('type', 'App\\Notifications\\OverdueDeliveryNotification')
-            ->where('data->service_id', $itemId)
-            ->where('data->service_type', $type)
-            ->whereDate('created_at', Carbon::today())
-            ->exists();
+        // If never notified before, send notification
+        if (is_null($lastNotificationAt)) {
+            return true;
+        }
+
+        // Check if enough days have passed since last notification
+        $daysSinceLastNotification = Carbon::parse($lastNotificationAt)->diffInDays(Carbon::now());
+
+        return $daysSinceLastNotification >= $intervalDays;
     }
 
     private function logBatchAuditEvents($itemIds, $type, $adminCount)

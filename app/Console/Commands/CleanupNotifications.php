@@ -124,6 +124,17 @@ class CleanupNotifications extends Command
             $this->newLine();
         }
 
+        // Cleanup orphaned overdue notifications (items already delivered)
+        if (!$dryRun) {
+            $this->info("Cleaning up orphaned overdue notifications...");
+            $orphanedDeleted = $this->cleanupOrphanedOverdueNotifications();
+            $deleted += $orphanedDeleted;
+
+            if ($orphanedDeleted > 0) {
+                $this->info("  → Deleted {$orphanedDeleted} orphaned notifications");
+            }
+        }
+
         $endTime = microtime(true);
         $duration = round($endTime - $startTime, 2);
 
@@ -139,5 +150,44 @@ class CleanupNotifications extends Command
             ['Remaining unread', $currentUnread],
             ['Remaining read', $currentTotal - $currentUnread]
         ]);
+    }
+
+    private function cleanupOrphanedOverdueNotifications()
+    {
+        $deleted = 0;
+
+        // Get IDs of delivered carpets
+        $deliveredCarpetIds = DB::table('carpets')
+            ->where('delivered', 'Delivered')
+            ->pluck('id')
+            ->toArray();
+
+        if (!empty($deliveredCarpetIds)) {
+            $carpetDeleted = DB::table('notifications')
+                ->where('type', 'App\Notifications\OverdueDeliveryNotification')
+                ->where('data->service_type', 'carpet')
+                ->whereIn(DB::raw('JSON_UNQUOTE(JSON_EXTRACT(data, "$.service_id"))'), $deliveredCarpetIds)
+                ->delete();
+
+            $deleted += $carpetDeleted;
+        }
+
+        // Get IDs of delivered laundry
+        $deliveredLaundryIds = DB::table('laundries')
+            ->where('delivered', 'Delivered')
+            ->pluck('id')
+            ->toArray();
+
+        if (!empty($deliveredLaundryIds)) {
+            $laundryDeleted = DB::table('notifications')
+                ->where('type', 'App\Notifications\OverdueDeliveryNotification')
+                ->where('data->service_type', 'laundry')
+                ->whereIn(DB::raw('JSON_UNQUOTE(JSON_EXTRACT(data, "$.service_id"))'), $deliveredLaundryIds)
+                ->delete();
+
+            $deleted += $laundryDeleted;
+        }
+
+        return $deleted;
     }
 }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Laundry;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class LaundryController extends Controller
 {
@@ -75,6 +76,15 @@ class LaundryController extends Controller
              'payment_status' => $request->payment_status,
              'created_at' => Carbon::now(),
         ]);
+
+        // Clean up overdue notifications when item is marked as delivered
+        if ($request->delivered === 'Delivered') {
+            DB::table('notifications')
+                ->where('type', 'App\Notifications\OverdueDeliveryNotification')
+                ->where('data->service_type', 'laundry')
+                ->where('data->service_id', $laundry_id)
+                ->delete();
+        }
 
         $notification = array(
             'message' => 'Laundry Updated Successfully',

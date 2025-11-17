@@ -41,13 +41,22 @@
                                     <!-- Unique ID -->
                                     <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label for="uniqueid" class="form-label">Unique ID</label>
+                                            <label for="uniqueid" class="form-label">
+                                                Unique ID
+                                                <span id="uniqueid-status" class="badge badge-soft-info ms-2" style="display: none;">
+                                                    <i class="ri-user-star-line"></i> Returning Customer
+                                                </span>
+                                            </label>
                                             <input
                                                 type="text"
                                                 name="uniqueid"
                                                 id="uniqueid"
                                                 class="form-control @error('uniqueid') is-invalid @enderror"
+                                                placeholder="Enter unique ID"
                                             >
+                                            <small id="uniqueid-loading" class="text-muted" style="display: none;">
+                                                <i class="ri-loader-4-line spin"></i> Checking customer...
+                                            </small>
                                             @error('uniqueid')
                                                 <span class="text-danger">{{ $message }}</span>
                                             @enderror
@@ -125,13 +134,22 @@
                                     <!-- Customer Phone Number -->
                                     <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label for="phone" class="form-label">Customer Phone Number</label>
+                                            <label for="phone" class="form-label">
+                                                Customer Phone Number
+                                                <span id="customer-status" class="badge badge-soft-info ms-2" style="display: none;">
+                                                    <i class="ri-user-star-line"></i> Returning Customer
+                                                </span>
+                                            </label>
                                             <input
                                                 type="text"
                                                 name="phone"
                                                 id="phone"
                                                 class="form-control @error('phone') is-invalid @enderror"
+                                                placeholder="Enter phone number"
                                             >
+                                            <small id="phone-loading" class="text-muted" style="display: none;">
+                                                <i class="ri-loader-4-line spin"></i> Checking customer...
+                                            </small>
                                             @error('phone')
                                                 <span class="text-danger">{{ $message }}</span>
                                             @enderror
@@ -161,7 +179,9 @@
                                             <input
                                                 type="date"
                                                 name="date_received"
+                                                id="date_received"
                                                 class="form-control @error('date_received') is-invalid @enderror"
+                                                value="{{ old('date_received', date('Y-m-d')) }}"
                                             >
                                             @error('date_received')
                                                 <span class="text-danger">{{ $message }}</span>
@@ -189,9 +209,8 @@
                                         <div class="mb-3">
                                             <label for="payment_status" class="form-label">Payment Status</label>
                                             <select name="payment_status" id="payment_status" class="form-select @error('payment_status') is-invalid @enderror">
-                                                <option selected disabled>Select Status</option>
                                                 <option value="Paid" {{ old('payment_status') == 'Paid' ? 'selected' : '' }}>Paid</option>
-                                                <option value="Not Paid" {{ old('payment_status') == 'Not Paid' ? 'selected' : '' }}>Not Paid</option>
+                                                <option value="Not Paid" {{ old('payment_status', 'Not Paid') == 'Not Paid' ? 'selected' : '' }}>Not Paid</option>
                                             </select>
                                             @error('payment_status')
                                                 <span class="text-danger">{{ $message }}</span>
@@ -230,9 +249,8 @@
                                                 id="delivered"
                                                 class="form-select @error('delivered') is-invalid @enderror"
                                             >
-                                                <option selected disabled>Select Status</option>
-                                                <option value="Delivered">Delivered</option>
-                                                <option value="Not Delivered">Not Delivered</option>
+                                                <option value="Delivered" {{ old('delivered') == 'Delivered' ? 'selected' : '' }}>Delivered</option>
+                                                <option value="Not Delivered" {{ old('delivered', 'Not Delivered') == 'Not Delivered' ? 'selected' : '' }}>Not Delivered</option>
                                             </select>
                                             @error('delivered')
                                                 <span class="text-danger">{{ $message }}</span>
@@ -257,6 +275,24 @@
 
     </div> <!-- container -->
 </div> <!-- content -->
+
+{{-- CSS for Loading Spinner --}}
+<style>
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.border-success {
+    border-color: #28a745 !important;
+    border-width: 2px !important;
+    transition: border-color 0.3s ease;
+}
+</style>
 
 {{-- JavaScript for Automatic Price Calculation --}}
 <script>
@@ -321,6 +357,194 @@ document.addEventListener("DOMContentLoaded", function() {
     paymentStatus.addEventListener("change", toggleTransactionCode);
 });
 
+// Autofill Customer Details for Returning Customers
+document.addEventListener('DOMContentLoaded', function() {
+    const phoneInput = document.getElementById('phone');
+    const nameInput = document.getElementById('name');
+    const locationInput = document.getElementById('location');
+    const sizeInput = document.getElementById('size');
+    const customerStatus = document.getElementById('customer-status');
+    const phoneLoading = document.getElementById('phone-loading');
+
+    let debounceTimer;
+
+    // Function to fetch customer details
+    function fetchCustomerDetails(phone) {
+        // Remove any spaces or special characters
+        phone = phone.trim();
+
+        if (phone.length < 10) {
+            return; // Only fetch if phone has at least 10 digits
+        }
+
+        // Show loading indicator
+        phoneLoading.style.display = 'inline-block';
+        customerStatus.style.display = 'none';
+
+        // Fetch customer data
+        fetch(`{{ route('customer.byPhone') }}?phone=${encodeURIComponent(phone)}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            phoneLoading.style.display = 'none';
+
+            if (data.found) {
+                // Autofill customer details
+                nameInput.value = data.name || '';
+                locationInput.value = data.location || '';
+                sizeInput.value = data.size || '';
+
+                // Trigger price calculation after setting size
+                sizeInput.dispatchEvent(new Event('input'));
+
+                // Show returning customer badge
+                customerStatus.style.display = 'inline-block';
+
+                // Add visual feedback with animation
+                nameInput.classList.add('border-success');
+                locationInput.classList.add('border-success');
+                sizeInput.classList.add('border-success');
+
+                // Show success toast notification
+                toastr.success('Customer details loaded! Please fill in the remaining fields.', 'Returning Customer Found', {
+                    timeOut: 3000,
+                    progressBar: true
+                });
+
+                // Remove border color after 3 seconds
+                setTimeout(() => {
+                    nameInput.classList.remove('border-success');
+                    locationInput.classList.remove('border-success');
+                    sizeInput.classList.remove('border-success');
+                }, 3000);
+            } else {
+                // New customer - clear the badge
+                customerStatus.style.display = 'none';
+            }
+        })
+        .catch(error => {
+            phoneLoading.style.display = 'none';
+            console.error('Error fetching customer details:', error);
+        });
+    }
+
+    // Event listener with debounce
+    phoneInput.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            fetchCustomerDetails(this.value);
+        }, 800); // Wait 800ms after user stops typing
+    });
+
+    // Also fetch on blur (when user leaves the field)
+    phoneInput.addEventListener('blur', function() {
+        clearTimeout(debounceTimer);
+        fetchCustomerDetails(this.value);
+    });
+});
+
+// Autofill Customer Details by Unique ID
+document.addEventListener('DOMContentLoaded', function() {
+    const uniqueIdInput = document.getElementById('uniqueid');
+    const nameInput = document.getElementById('name');
+    const locationInput = document.getElementById('location');
+    const phoneInput = document.getElementById('phone');
+    const sizeInput = document.getElementById('size');
+    const uniqueIdStatus = document.getElementById('uniqueid-status');
+    const uniqueIdLoading = document.getElementById('uniqueid-loading');
+    const customerStatus = document.getElementById('customer-status');
+
+    let debounceTimer;
+
+    // Function to fetch customer details by unique ID
+    function fetchCustomerByUniqueId(uniqueId) {
+        // Trim whitespace
+        uniqueId = uniqueId.trim();
+
+        if (uniqueId.length < 3) {
+            return; // Only fetch if unique ID has at least 3 characters
+        }
+
+        // Show loading indicator
+        uniqueIdLoading.style.display = 'inline-block';
+        uniqueIdStatus.style.display = 'none';
+        customerStatus.style.display = 'none';
+
+        // Fetch customer data
+        fetch(`{{ route('customer.byUniqueId') }}?uniqueid=${encodeURIComponent(uniqueId)}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            uniqueIdLoading.style.display = 'none';
+
+            if (data.found) {
+                // Autofill customer details
+                nameInput.value = data.name || '';
+                locationInput.value = data.location || '';
+                phoneInput.value = data.phone || '';
+                sizeInput.value = data.size || '';
+
+                // Trigger price calculation after setting size
+                sizeInput.dispatchEvent(new Event('input'));
+
+                // Show returning customer badge
+                uniqueIdStatus.style.display = 'inline-block';
+                customerStatus.style.display = 'inline-block';
+
+                // Add visual feedback with animation
+                nameInput.classList.add('border-success');
+                locationInput.classList.add('border-success');
+                phoneInput.classList.add('border-success');
+                sizeInput.classList.add('border-success');
+
+                // Show success toast notification
+                toastr.success('Customer details loaded from existing record! Please fill in the remaining fields.', 'Returning Customer Found', {
+                    timeOut: 3000,
+                    progressBar: true
+                });
+
+                // Remove border color after 3 seconds
+                setTimeout(() => {
+                    nameInput.classList.remove('border-success');
+                    locationInput.classList.remove('border-success');
+                    phoneInput.classList.remove('border-success');
+                    sizeInput.classList.remove('border-success');
+                }, 3000);
+            } else {
+                // New customer or ID not found - clear the badge
+                uniqueIdStatus.style.display = 'none';
+            }
+        })
+        .catch(error => {
+            uniqueIdLoading.style.display = 'none';
+            console.error('Error fetching customer details by unique ID:', error);
+        });
+    }
+
+    // Event listener with debounce
+    uniqueIdInput.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            fetchCustomerByUniqueId(this.value);
+        }, 800); // Wait 800ms after user stops typing
+    });
+
+    // Also fetch on blur (when user leaves the field)
+    uniqueIdInput.addEventListener('blur', function() {
+        clearTimeout(debounceTimer);
+        fetchCustomerByUniqueId(this.value);
+    });
+});
 
 </script>
 

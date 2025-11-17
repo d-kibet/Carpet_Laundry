@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Carpet;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class CarpetController extends Controller
 {
@@ -153,6 +154,15 @@ class CarpetController extends Controller
              'created_at' => Carbon::now(),
         ]);
 
+        // Clean up overdue notifications when item is marked as delivered
+        if ($request->delivered === 'Delivered') {
+            DB::table('notifications')
+                ->where('type', 'App\Notifications\OverdueDeliveryNotification')
+                ->where('data->service_type', 'carpet')
+                ->where('data->service_id', $carpet_id)
+                ->delete();
+        }
+
         $notification = array(
             'message' => 'Carpet Updated Successfully',
             'alert-type' => 'success'
@@ -179,6 +189,82 @@ class CarpetController extends Controller
         $carpet = Carpet::findOrFail($id);
         return view('backend.carpet.details_carpet',compact('carpet'));
 
+    } // End Method
+
+    /**
+     * Get customer details by phone number for autofill
+     */
+    public function getCustomerByPhone(Request $request)
+    {
+        $phone = $request->phone;
+
+        if (!$phone) {
+            return response()->json(['found' => false]);
+        }
+
+        // Check in Carpets first (most recent)
+        $customer = Carpet::where('phone', $phone)
+            ->orderBy('date_received', 'desc')
+            ->first();
+
+        $serviceType = 'carpet';
+
+        // If not found in carpets, check laundry
+        if (!$customer) {
+            $customer = \App\Models\Laundry::where('phone', $phone)
+                ->orderBy('date_received', 'desc')
+                ->first();
+            $serviceType = 'laundry';
+        }
+
+        if ($customer) {
+            return response()->json([
+                'found' => true,
+                'name' => $customer->name,
+                'location' => $customer->location,
+                'phone' => $customer->phone,
+                'size' => $customer->size ?? '',
+                'service_type' => $serviceType,
+            ]);
+        }
+
+        return response()->json(['found' => false]);
+    } // End Method
+
+    /**
+     * Get customer details by unique ID for autofill
+     */
+    public function getCustomerByUniqueId(Request $request)
+    {
+        $uniqueId = $request->uniqueid;
+
+        if (!$uniqueId) {
+            return response()->json(['found' => false]);
+        }
+
+        // Check in Carpets first
+        $customer = Carpet::where('uniqueid', $uniqueId)->first();
+        $serviceType = 'carpet';
+
+        // If not found in carpets, check laundry
+        if (!$customer) {
+            $customer = \App\Models\Laundry::where('uniqueid', $uniqueId)->first();
+            $serviceType = 'laundry';
+        }
+
+        if ($customer) {
+            return response()->json([
+                'found' => true,
+                'name' => $customer->name,
+                'location' => $customer->location,
+                'phone' => $customer->phone,
+                'uniqueid' => $customer->uniqueid,
+                'size' => $customer->size ?? '',
+                'service_type' => $serviceType,
+            ]);
+        }
+
+        return response()->json(['found' => false]);
     } // End Method
 
     public function downloadAllCarpets()

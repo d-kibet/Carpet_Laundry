@@ -139,6 +139,35 @@
                 </li>
                 @endif
 
+                <!-- SMS Management -->
+                <li>
+                    <a href="javascript: void(0);" data-bs-toggle="collapse">
+                        <i class="ri-message-2-line"></i>
+                        <span>SMS</span>
+                    </a>
+                    <ul class="sub-menu" aria-expanded="false">
+                        <li><a href="{{ route('sms.dashboard') }}">
+                            <i class="ri-dashboard-3-line me-2"></i>SMS Dashboard
+                        </a></li>
+
+                        <li><a href="{{ route('sms.send') }}">
+                            <i class="ri-send-plane-2-line me-2"></i>Send Single SMS
+                        </a></li>
+
+                        <li><a href="{{ route('sms.bulk') }}">
+                            <i class="ri-send-plane-fill me-2"></i>Send Bulk SMS
+                        </a></li>
+
+                        <li><a href="{{ route('sms.history') }}">
+                            <i class="ri-history-line me-2"></i>SMS History
+                        </a></li>
+
+                        <li><a href="{{ route('sms.statistics') }}">
+                            <i class="ri-bar-chart-line me-2"></i>SMS Statistics
+                        </a></li>
+                    </ul>
+                </li>
+
                 <!-- System Management -->
                 <li>
                     <a href="javascript: void(0);" data-bs-toggle="collapse">

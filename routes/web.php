@@ -64,6 +64,8 @@ Route::controller(CarpetController::class)->group(function(){
     Route::post('/update/carpet','UpdateCarpet')->name('carpet.update');
     Route::get('/delete/carpet/{id}','DeleteCarpet')->name('delete.carpet');
     Route::get('/details/carpet/{id}','DetailsCarpet')->name('details.carpet');
+    Route::get('/customer/by-phone','getCustomerByPhone')->name('customer.byPhone');
+    Route::get('/customer/by-uniqueid','getCustomerByUniqueId')->name('customer.byUniqueId');
     Route::get('reports/carpets/download-all','downloadAllCarpets')->name('reports.carpets.downloadAll');
     Route::get('reports/carpets/month','viewCarpetsByMonth')->name('reports.carpets.viewMonth');
     Route::get('reports/carpets/month/download','downloadCarpetsByMonth')->name('reports.carpets.downloadMonth');
@@ -319,5 +321,25 @@ Route::controller(App\Http\Controllers\Backend\ExpenseController::class)->middle
 Route::post('/api/performance/data', [ReportController::class, 'performanceData'])
     ->name('api.performance.data')
     ->middleware(['auth']);
+
+// SMS Routes
+Route::controller(App\Http\Controllers\Backend\SmsController::class)->middleware('auth')->group(function () {
+    Route::get('/sms/dashboard', 'dashboard')->name('sms.dashboard');
+    Route::get('/sms/send', 'sendForm')->name('sms.send');
+    Route::post('/sms/send-single', 'sendSingle')->name('sms.sendSingle');
+    Route::get('/sms/bulk', 'bulkForm')->name('sms.bulk');
+    Route::post('/sms/preview-recipients', 'previewRecipients')->name('sms.previewRecipients');
+    Route::post('/sms/send-bulk', 'sendBulk')->name('sms.sendBulk');
+    Route::post('/sms/send-to-carpet/{id}', 'sendToCarpet')->name('sms.sendToCarpet');
+    Route::get('/sms/balance', 'getBalance')->name('sms.balance');
+    Route::get('/sms/history', 'history')->name('sms.history');
+    Route::get('/sms/statistics', 'statistics')->name('sms.statistics');
+});
+
+// SMS Webhook Routes (No authentication required - called by Roberms)
+Route::controller(App\Http\Controllers\Backend\SmsWebhookController::class)->group(function () {
+    Route::post('/sms/webhook/delivery', 'handleDeliveryReport')->name('sms.webhook.delivery');
+    Route::get('/sms/delivery-status/{uniqueIdentifier}', 'checkDeliveryStatus')->name('sms.deliveryStatus')->middleware('auth');
+});
 
 require __DIR__.'/auth.php';
